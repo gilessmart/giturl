@@ -35,16 +35,13 @@ def repo_get_current_hash(repo_dir):
     return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=repo_dir, text=True).strip()
 
 
-def run_giturl(path, args=None):
-    cmd = [sys.executable, "-m", "giturl"]
-    if args:
-        cmd.extend(args)
-    cmd.append(str(path))
+def giturl(*args):
+    cmd = [sys.executable, "-m", "giturl", *args]
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
 def test_cli__no_repo(tmp_path):
-    proc = run_giturl(tmp_path)
+    proc = giturl(tmp_path)
     assert proc.returncode == 1
     assert "not part of a git repo" in proc.stderr
 
@@ -52,7 +49,7 @@ def test_cli__no_repo(tmp_path):
 def test_cli__no_remotes(tmp_path):
     repo_create(tmp_path)
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path / "README.md")
+    proc = giturl(tmp_path / "README.md")
     assert proc.returncode == 1
     assert "No git remotes" in proc.stderr
 
@@ -62,7 +59,7 @@ def test_cli__no_upstream_multiple_remotes(tmp_path):
     repo_add_remote(tmp_path, "github", "git@github.com:gilessmart/giturl.git")
     repo_add_remote(tmp_path, "bitbucket", "git@bitbucket.org:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path)
+    proc = giturl(tmp_path)
     assert proc.returncode == 1
     assert "multiple remotes" in proc.stderr
 
@@ -73,7 +70,7 @@ def test_cli__with_upstream_and_multiple_remotes(tmp_path):
     repo_add_remote(tmp_path, "bitbucket", "git@bitbucket.org:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     repo_set_upstream(tmp_path, "github", "remote_branch")
-    proc = run_giturl(tmp_path / "README.md", args=["-b"])
+    proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/remote_branch/README.md"
 
@@ -82,7 +79,7 @@ def test_cli__no_upstream_single_remote(tmp_path):
     repo_create(tmp_path, "branch_name")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path / "README.md", args=["-b"])
+    proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/branch_name/README.md"
 
@@ -92,7 +89,7 @@ def test_cli__root_level_folder(tmp_path):
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     hash = repo_get_current_hash(tmp_path)
-    proc = run_giturl(tmp_path)
+    proc = giturl(tmp_path)
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}"
 
@@ -102,7 +99,7 @@ def test_cli__root_level_file(tmp_path):
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     hash = repo_get_current_hash(tmp_path)
-    proc = run_giturl(tmp_path / "README.md")
+    proc = giturl(tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/README.md"
 
@@ -112,7 +109,7 @@ def test_cli__nested_file(tmp_path):
     repo_commit_file(tmp_path, "a/b/foo.txt", "hello\n")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     hash = repo_get_current_hash(tmp_path)
-    proc = run_giturl(tmp_path /"a/b/foo.txt")
+    proc = giturl(tmp_path / "a/b/foo.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/a/b/foo.txt"
 
@@ -122,7 +119,7 @@ def test_cli__line_num_option(tmp_path):
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     hash = repo_get_current_hash(tmp_path)
-    proc = run_giturl(tmp_path / "README.md", args=["-l", "7"])
+    proc = giturl("-l", "7", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/README.md#L7"
 
@@ -131,7 +128,7 @@ def test_cli__branch_option(tmp_path):
     repo_create(tmp_path, branch="feature/x")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path / "README.md", args=["-b"])
+    proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/feature/x/README.md"
 
@@ -141,7 +138,7 @@ def test_cli__path_with_special_chars(tmp_path):
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "file -=+.txt", "hello\n")
     hash = repo_get_current_hash(tmp_path)
-    proc = run_giturl(tmp_path / "file -=+.txt")
+    proc = giturl(tmp_path / "file -=+.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/file%20-%3D%2B.txt"
 
@@ -150,7 +147,7 @@ def test_cli__branch_with_slash(tmp_path):
     repo_create(tmp_path, branch="test-branches/abc")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path / "README.md", args=["-b"])
+    proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/test-branches/abc/README.md"
 
@@ -159,6 +156,6 @@ def test_cli__branch_with_special_chars(tmp_path):
     repo_create(tmp_path, branch="test-branches/_=+,.@¬£")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
-    proc = run_giturl(tmp_path / "README.md", args=["-b"])
+    proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"
