@@ -26,8 +26,8 @@ def parse_args() -> tuple[str, int | None, bool | None]:
 
 
 url_configs = {
-    r"github.com[:/](?P<account>.*?)/(?P<repo>.*?).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
-    r"bitbucket.org[:/](?P<account>.*?)/(?P<repo>.*?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
+    r"github.com[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
+    r"bitbucket.org[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
 }
 
 def generate_url(remote_url: str, url_args: dict) -> str:
