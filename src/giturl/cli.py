@@ -48,27 +48,27 @@ def main():
 
     repo_root = git.get_repo_root(full_path)
     if repo_root is None:
-        print(f"Error: Path '{full_path}' is not part of a git repository.", file=sys.stderr)
+        print(f"Error: Path '{full_path}' is not part of a git repo.", file=sys.stderr)
         sys.exit(1)
 
     remotes = git.get_remotes(repo_root)
     if not remotes:
-        print("Error: No git remotes found in this repository.", file=sys.stderr)
+        print("Error: No git remotes in this repo.", file=sys.stderr)
         sys.exit(1)
 
-    if len(remotes) == 1:
+    upstream = git.get_upstream(repo_root)
+    if upstream:
+        remote = upstream.split("/")[0]
+    elif len(remotes) == 1:
         remote = remotes[0]
     else:
-        upstream = git.get_upstream(repo_root)
-        if not upstream:
-            print("Error: Repository has multiple remotes, but no upstream to determine the correct one.", file=sys.stderr)
-            sys.exit(1)
-        remote = upstream.split("/")[0]
+        print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
+        sys.exit(1)
 
     remote_url = git.get_remote_url(repo_root, remote)
 
     if branch_mode:
-        branch_name = git.get_current_branch_name(repo_root)
+        branch_name = upstream.split("/")[1] if upstream else git.get_current_branch_name(repo_root)
         if branch_name is None:
             print("Error: No branch is currently checked out.", file=sys.stderr)
             sys.exit(1)
@@ -76,7 +76,7 @@ def main():
     else:
         short_hash = git.get_short_hash(repo_root)
         if short_hash is None:
-            print("Error: Unable to fetch the latest commit hash. Does the repository have any commits?", file=sys.stderr)
+            print("Error: Unable to fetch the latest commit hash. Does the repo have any commits?", file=sys.stderr)
             sys.exit(1)
         ref = short_hash
 
