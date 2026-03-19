@@ -9,6 +9,10 @@ def repo_create(repo_dir, branch="main"):
     subprocess.check_call(["git", "config", "user.email", "test@example.com"], cwd=repo_dir)
 
 
+def repo_checkout(repo_dir, ref):
+    subprocess.check_call(["git", "checkout", ref], cwd=repo_dir)
+
+
 def repo_add_remote(repo_dir, name, url):
     subprocess.check_call(["git", "remote", "add", name, url], cwd=repo_dir)
 
@@ -75,6 +79,16 @@ def test_cli__with_upstream_and_multiple_remotes(tmp_path):
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/remote_branch/README.md"
 
 
+def test_cli__upstream_and_remote_name_with_special_chars(tmp_path):
+    repo_create(tmp_path, "local_branch")
+    repo_add_remote(tmp_path, "remote-/_=+,.@¬£", "git@github.com:gilessmart/giturl.git")
+    repo_commit_file(tmp_path, "README.md", "hello\n")
+    repo_set_upstream(tmp_path, "remote-/_=+,.@¬£", "remote_branch")
+    proc = giturl("-b", tmp_path / "README.md")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/remote_branch/README.md"
+
+
 def test_cli__no_upstream_single_remote(tmp_path):
     repo_create(tmp_path, "branch_name")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
@@ -125,12 +139,24 @@ def test_cli__line_num_option(tmp_path):
 
 
 def test_cli__branch_option(tmp_path):
-    repo_create(tmp_path, branch="feature/x")
+    repo_create(tmp_path, branch="feature-x")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
-    assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/feature/x/README.md"
+    assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/feature-x/README.md"
+
+
+def test_cli__branch_option_with_detached_head(tmp_path):
+    repo_create(tmp_path, branch="feature-x")
+    repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
+    repo_commit_file(tmp_path, "README.md", "hello 1\n")
+    old_hash = repo_get_current_hash(tmp_path)
+    repo_commit_file(tmp_path, "README.md", "hello 2\n")
+    repo_checkout(tmp_path, old_hash)
+    proc = giturl("-b", tmp_path / "README.md")
+    assert proc.returncode != 0
+    assert "no branch checked out" in proc.stderr
 
 
 def test_cli__path_with_special_chars(tmp_path):
@@ -143,19 +169,20 @@ def test_cli__path_with_special_chars(tmp_path):
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/file%20-%3D%2B.txt"
 
 
-def test_cli__branch_with_slash(tmp_path):
-    repo_create(tmp_path, branch="test-branches/abc")
+def test_cli__local_branch_with_special_chars(tmp_path):
+    repo_create(tmp_path, branch="test-branches/_=+,.@¬£")
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
-    assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/test-branches/abc/README.md"
+    assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"
 
 
-def test_cli__branch_with_special_chars(tmp_path):
-    repo_create(tmp_path, branch="test-branches/_=+,.@¬£")
+def test_cli__upstream_branch_with_special_chars(tmp_path):
+    repo_create(tmp_path)
     repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
+    repo_set_upstream(tmp_path, "origin", "test-branches/_=+,.@¬£")
     proc = giturl("-b", tmp_path / "README.md")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"

@@ -14,15 +14,24 @@ def get_remotes(repo_root: str) -> list[str]:
     return [r.strip() for r in remotes if r]
 
 
-def get_upstream(repo_root: str) -> str | None:
+def get_upstream_remote(repo_root: str, local_branch: str) -> str | None:
     result = subprocess.run(
-        ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+        ["git", "config", "get", f"branch.{local_branch}.remote"],
         text=True,
         capture_output=True,
         encoding="utf-8",
-        cwd=repo_root
-    )
+        cwd=repo_root)
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def get_upstream_branch(repo_root: str, local_branch: str) -> str | None:
+    result = subprocess.run(
+        ["git", "config", "get", f"branch.{local_branch}.merge"],
+        text=True,
+        capture_output=True,
+        encoding="utf-8",
+        cwd=repo_root)
+    return result.stdout.removeprefix("refs/heads/").strip() if result.returncode == 0 else None
 
 
 def get_remote_url(repo_root: str, remote: str) -> str:

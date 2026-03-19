@@ -55,30 +55,35 @@ def main():
     if not remotes:
         print("Error: No git remotes in this repo.", file=sys.stderr)
         sys.exit(1)
-
-    upstream = git.get_upstream(repo_root)
-    if upstream:
-        remote = upstream.split("/")[0]
-    elif len(remotes) == 1:
-        remote = remotes[0]
-    else:
-        print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
-        sys.exit(1)
-
-    remote_url = git.get_remote_url(repo_root, remote)
-
+    
+    local_branch = git.get_current_branch_name(repo_root)
+    
+    remote = None
     if branch_mode:
-        branch_name = upstream.split("/")[1] if upstream else git.get_current_branch_name(repo_root)
-        if branch_name is None:
-            print("Error: No branch is currently checked out.", file=sys.stderr)
+        if local_branch is None:
+            print("Error: Cannot build a branch-based URL with no branch checked out.", file=sys.stderr)
             sys.exit(1)
-        ref = quote(branch_name)
+        
+        remote = git.get_upstream_remote(repo_root, local_branch)
+
+        upstream_branch = git.get_upstream_branch(repo_root, local_branch)
+        ref = quote(upstream_branch or local_branch)
     else:
-        short_hash = git.get_short_hash(repo_root)
-        if short_hash is None:
+        if local_branch:
+            remote = git.get_upstream_remote(repo_root, local_branch)
+
+        ref = git.get_short_hash(repo_root)
+        if ref is None:
             print("Error: Unable to fetch the latest commit hash. Does the repo have any commits?", file=sys.stderr)
             sys.exit(1)
-        ref = short_hash
+
+    if remote is None and len(remotes) == 1:
+        remote = remotes[0]
+    if remote is None:
+        print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
+        sys.exit(1)
+    
+    remote_url = git.get_remote_url(repo_root, remote)
 
     if os.path.samefile(full_path, repo_root):
         relative_path = ""
