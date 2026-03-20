@@ -3,6 +3,7 @@ import os
 import pathlib
 import re
 import sys
+from typing import NoReturn
 from urllib.parse import quote
 
 import giturl.git as git
@@ -25,6 +26,11 @@ def parse_args() -> tuple[str, int | None, bool | None]:
     return args.path, args.line_number, args.branch_mode
 
 
+def fail(msg: str) -> NoReturn:
+    print("Error: " + msg, file=sys.stderr)
+    sys.exit(1)
+
+
 url_configs = {
     r"github.com[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
     r"bitbucket.org[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
@@ -38,8 +44,7 @@ def generate_url(remote_url: str, url_args: dict) -> str:
             template = parse_template(template_str)
             return template.apply(match.groupdict() | url_args)
     
-    print(f"Error: No config matched remote URL {remote_url}", file=sys.stderr)
-    sys.exit(1)
+    fail(f"No config matched remote URL {remote_url}")
 
 
 def main():
@@ -49,35 +54,30 @@ def main():
 
     repo_root = git.get_repo_root(full_path)
     if repo_root is None:
-        print(f"Error: Path '{full_path}' is not part of a git repo.", file=sys.stderr)
-        sys.exit(1)
+        fail(f"Path '{full_path}' is not part of a git repo.")
 
     remotes = git.get_remotes(repo_root)
     if not remotes:
-        print("Error: No git remotes in this repo.", file=sys.stderr)
-        sys.exit(1)
+        fail("No git remotes in this repo.")
     
     local_branch = git.get_current_branch_name(repo_root)
 
     if branch_mode:
         if local_branch is None:
-            print("Error: Cannot build a branch-based URL with no branch checked out.", file=sys.stderr)
-            sys.exit(1)
+            fail("Cannot build a branch-based URL with no branch checked out.")
         upstream_branch = git.get_upstream_branch(repo_root, local_branch)
         ref = quote(upstream_branch or local_branch)
     else:
         ref = git.get_short_hash(repo_root)
         if ref is None:
-            print("Error: Unable to fetch the latest commit hash. Does the repo have any commits?", file=sys.stderr)
-            sys.exit(1)
+            fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
 
     remote = git.get_upstream_remote(repo_root, local_branch) if local_branch else None
     if remote is None:
         if len(remotes) == 1:
             remote = remotes[0]
         else:
-            print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
-            sys.exit(1)
+            fail("Repo has multiple remotes and no upstream to determine the correct one.")
     
     remote_url = git.get_remote_url(repo_root, remote)
 
