@@ -30,6 +30,7 @@ url_configs = {
     r"bitbucket.org[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
 }
 
+
 def generate_url(remote_url: str, url_args: dict) -> str:
     for pattern, template_str in url_configs.items():
         match = re.search(pattern, remote_url)
@@ -57,31 +58,26 @@ def main():
         sys.exit(1)
     
     local_branch = git.get_current_branch_name(repo_root)
-    
-    remote = None
+
     if branch_mode:
         if local_branch is None:
             print("Error: Cannot build a branch-based URL with no branch checked out.", file=sys.stderr)
             sys.exit(1)
-        
-        remote = git.get_upstream_remote(repo_root, local_branch)
-
         upstream_branch = git.get_upstream_branch(repo_root, local_branch)
         ref = quote(upstream_branch or local_branch)
     else:
-        if local_branch:
-            remote = git.get_upstream_remote(repo_root, local_branch)
-
         ref = git.get_short_hash(repo_root)
         if ref is None:
             print("Error: Unable to fetch the latest commit hash. Does the repo have any commits?", file=sys.stderr)
             sys.exit(1)
 
-    if remote is None and len(remotes) == 1:
-        remote = remotes[0]
+    remote = git.get_upstream_remote(repo_root, local_branch) if local_branch else None
     if remote is None:
-        print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
-        sys.exit(1)
+        if len(remotes) == 1:
+            remote = remotes[0]
+        else:
+            print("Error: Repo has multiple remotes and no upstream to determine the correct one.", file=sys.stderr)
+            sys.exit(1)
     
     remote_url = git.get_remote_url(repo_root, remote)
 
