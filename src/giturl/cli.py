@@ -37,12 +37,13 @@ url_configs = {
 }
 
 
-def generate_url(remote_url: str, url_args: dict) -> str:
+def generate_url(remote_url: str, url_args: dict[str, str | None]) -> str:
     for pattern, template_str in url_configs.items():
         match = re.search(pattern, remote_url)
         if match:
             template = parse_template(template_str)
-            return template.apply(match.groupdict() | url_args)
+            quoted_args = { k: quote(v) for (k, v) in (match.groupdict() | url_args).items() if v is not None }
+            return template.apply(quoted_args)
     
     fail(f"No config matched remote URL {remote_url}")
 
@@ -66,7 +67,7 @@ def main():
         if local_branch is None:
             fail("Cannot build a branch-based URL with no branch checked out.")
         upstream_branch = git.get_upstream_branch(repo_root, local_branch)
-        ref = quote(upstream_branch or local_branch)
+        ref = upstream_branch or local_branch
     else:
         ref = git.get_short_hash(repo_root)
         if ref is None:
@@ -84,7 +85,7 @@ def main():
     if os.path.samefile(full_path, repo_root):
         relative_path = ""
     else:
-        relative_path = "/" + quote(os.path.relpath(full_path, repo_root).replace(os.sep, "/"))
+        relative_path = "/" + os.path.relpath(full_path, repo_root).replace(os.sep, "/")
 
     url = generate_url(remote_url, {
         "ref": ref,

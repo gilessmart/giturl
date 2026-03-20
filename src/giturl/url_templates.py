@@ -72,7 +72,7 @@ class Template:
     def __init__(self, segments: list[str | FillPointSegment]):
         self.segments = segments
 
-    def apply(self, template_args: dict) -> str:
+    def apply(self, template_args: dict[str, str]) -> str:
         result = ""
         for seg in self.segments:
             if isinstance(seg, str):
