@@ -57,11 +57,11 @@ def main():
     if repo_root is None:
         fail(f"Path '{full_path}' is not part of a git repo.")
 
-    remotes = git.get_remotes(repo_root)
-    if not remotes:
-        fail("No git remotes in this repo.")
-    
     local_branch = git.get_current_branch_name(repo_root)
+
+    remote = get_remote(repo_root, local_branch)
+    
+    remote_url = git.get_remote_url(repo_root, remote)
 
     if branch_mode:
         if local_branch is None:
@@ -72,15 +72,6 @@ def main():
         ref = git.get_short_hash(repo_root)
         if ref is None:
             fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
-
-    remote = git.get_upstream_remote(repo_root, local_branch) if local_branch else None
-    if remote is None:
-        if len(remotes) == 1:
-            remote = remotes[0]
-        else:
-            fail("Repo has multiple remotes and no upstream to determine the correct one.")
-    
-    remote_url = git.get_remote_url(repo_root, remote)
 
     if os.path.samefile(full_path, repo_root):
         relative_path = ""
@@ -94,3 +85,15 @@ def main():
     })
 
     print(url)
+
+def get_remote(repo_root: str, local_branch: str | None) -> str:
+    if local_branch is not None and (remote := git.get_upstream_remote(repo_root, local_branch)) is not None:
+        return remote
+        
+    remotes = git.get_remotes(repo_root)
+    if len(remotes) == 0:
+        fail("No git remotes in this repo.")
+    elif len(remotes) == 1:
+        return remotes[0]
+    else:
+        fail("Repo has multiple remotes and no upstream to determine the correct one.")
