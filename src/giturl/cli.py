@@ -68,14 +68,11 @@ def main():
     else:
         ref = get_short_hash(repo_root)
 
-    if os.path.samefile(full_path, repo_root):
-        relative_path = ""
-    else:
-        relative_path = "/" + os.path.relpath(full_path, repo_root).replace(os.sep, "/")
+    path = get_repo_path(repo_root, full_path)
 
     url = generate_url(remote_url, {
         "ref": ref,
-        "path": relative_path,
+        "path": path,
         "line_number": str(line_number) if line_number is not None else None,
     })
 
@@ -110,3 +107,9 @@ def get_short_hash(repo_root: str):
     if (hash := git.get_short_hash(repo_root)) is None:
         fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
     return hash
+
+
+def get_repo_path(repo_root, full_path):
+    if os.path.samefile(full_path, repo_root):
+        return ""
+    return "/" + os.path.relpath(full_path, repo_root).replace(os.sep, "/")
