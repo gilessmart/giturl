@@ -10,7 +10,7 @@ import giturl.git as git
 from giturl.url_templates import parse_template
 
 
-def parse_args() -> tuple[str, int | None, bool | None]:
+def parse_args() -> tuple[str, int | None, bool]:
     parser = argparse.ArgumentParser(description="Generate a GitHub URL for a file or directory in a git repository.")
     parser.add_argument("-l", "--line", dest="line_number", type=int, help="Line number to include in the URL", metavar="line_number")
     parser.add_argument("-b", "--branch", dest="branch_mode", action="store_true", help="Use branch name instead of commit SHA in the URL")
@@ -64,14 +64,9 @@ def main():
     remote_url = git.get_remote_url(repo_root, remote)
 
     if branch_mode:
-        if local_branch is None:
-            fail("Cannot build a branch-based URL with no branch checked out.")
-        upstream_branch = git.get_upstream_branch(repo_root, local_branch)
-        ref = upstream_branch or local_branch
+        ref = get_branch(repo_root, local_branch)
     else:
-        ref = git.get_short_hash(repo_root)
-        if ref is None:
-            fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
+        ref = get_short_hash(repo_root)
 
     if os.path.samefile(full_path, repo_root):
         relative_path = ""
@@ -86,6 +81,11 @@ def main():
 
     print(url)
 
+
+def get_ref(repo_root: str, branch_mode: bool, local_branch: str | None):
+    return get_branch(repo_root, local_branch) if branch_mode else get_short_hash(repo_root)
+
+
 def get_remote(repo_root: str, local_branch: str | None) -> str:
     if local_branch is not None and (remote := git.get_upstream_remote(repo_root, local_branch)) is not None:
         return remote
@@ -97,3 +97,16 @@ def get_remote(repo_root: str, local_branch: str | None) -> str:
         return remotes[0]
     else:
         fail("Repo has multiple remotes and no upstream to determine the correct one.")
+
+
+def get_branch(repo_root: str, local_branch: str | None):
+    if local_branch is None:
+        fail("Cannot build a branch-based URL with no branch checked out.")
+    upstream_branch = git.get_upstream_branch(repo_root, local_branch)
+    return upstream_branch or local_branch
+
+
+def get_short_hash(repo_root: str):
+    if (hash := git.get_short_hash(repo_root)) is None:
+        fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
+    return hash
