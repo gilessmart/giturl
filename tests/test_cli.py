@@ -118,6 +118,25 @@ def test_cli__root_level_file(tmp_path):
     assert proc.stdout.strip() == f"https://github.com/gilessmart/giturl/blob/{hash}/README.md"
 
 
+def test_cli__path_doesnt_exist(tmp_path):
+    repo_create(tmp_path)
+    repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
+    repo_commit_file(tmp_path, "README.md", "hello\n")
+    proc = giturl(tmp_path / "READYOU.md")
+    assert proc.returncode != 0
+    assert "not an existing file or directory" in proc.stderr
+
+
+def test_cli__file_not_in_repo(tmp_path):
+    repo_create(tmp_path)
+    repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
+    repo_commit_file(tmp_path, "README.md", "hello\n")
+    write_file(tmp_path / "READYOU.md", "goodbye\n")    
+    proc = giturl(tmp_path / "READYOU.md")
+    assert proc.returncode != 0
+    assert "not in the git tree" in proc.stderr
+
+
 def test_cli__nested_file(tmp_path):
     repo_create(tmp_path)
     repo_commit_file(tmp_path, "a/b/foo.txt", "hello\n")

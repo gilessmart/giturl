@@ -79,23 +79,29 @@ def get_remote(repo_root: str, local_branch: str | None) -> str:
         fail("Repo has multiple remotes and no upstream to determine the correct one.")
 
 
-def get_branch(repo_root: str, local_branch: str | None):
+def get_branch(repo_root: str, local_branch: str | None) -> str:
     if local_branch is None:
         fail("Cannot build a branch-based URL with no branch checked out.")
     upstream_branch = git.get_upstream_branch(repo_root, local_branch)
     return upstream_branch or local_branch
 
 
-def get_short_hash(repo_root: str):
+def get_short_hash(repo_root: str) -> str:
     if (hash := git.get_short_hash(repo_root)) is None:
         fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
     return hash
 
 
-def get_repo_path(repo_root, full_path):
+def get_repo_path(repo_root, full_path) -> str:
     if os.path.samefile(full_path, repo_root):
         return ""
-    return "/" + os.path.relpath(full_path, repo_root).replace(os.sep, "/")
+
+    rel_path = os.path.relpath(full_path, repo_root).replace(os.sep, "/")
+    
+    if not git.in_tree(repo_root, rel_path):
+        fail(f"Path '{rel_path}' is not in the git tree.")
+
+    return "/" + rel_path
 
 
 def generate_url(remote_url: str, url_args: dict[str, str | None]) -> str:

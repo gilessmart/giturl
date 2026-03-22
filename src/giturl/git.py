@@ -46,3 +46,12 @@ def get_current_branch_name(repo_root: str) -> str | None:
 def get_short_hash(repo_root: str) -> str | None:
     result = subprocess.run(["git", "rev-parse", "--short", "HEAD"], text=True, capture_output=True, cwd=repo_root)
     return result.stdout.strip() if result.returncode == 0 else None # Return None if the command fails, e.g. if there are no commits in the repository
+
+
+def in_tree(repo_root: str, path: str) -> bool:
+    null_terminated_paths = subprocess.check_output(
+        ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", path], 
+        text=True,
+        encoding="utf-8",
+        cwd=repo_root)
+    return null_terminated_paths.count("\x00") > 0
