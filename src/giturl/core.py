@@ -1,19 +1,28 @@
 import os
 import re
-import sys
-from typing import NoReturn
 from urllib.parse import quote
 
 from giturl import git
 from giturl.url_templates import parse_template
 
 
-def get_git_url(path_arg: str, line_number: int | None, branch_mode: bool) -> str:
-    full_path = os.path.abspath(path_arg)
+class GitUrlError(Exception):
+    """Exception raised for errors specific to giturl operations."""
+    pass
 
-    repo_root = git.get_repo_root(full_path)
+
+def get_git_url(path: str, line_number: int | None, branch_mode: bool) -> str:
+    abs_path = os.path.abspath(path)
+    
+    if not os.path.isfile(abs_path) and not os.path.isdir(abs_path):
+        raise GitUrlError(f"Path is not an existing file or directory.")
+
+    if line_number is not None and os.path.isdir(abs_path):
+        raise GitUrlError("Line number is invalid when path is a directory.")
+    
+    repo_root = git.get_repo_root(abs_path)
     if repo_root is None:
-        fail(f"Path '{full_path}' is not part of a git repo.")
+        raise GitUrlError(f"Path is not part of a git repo.")
 
     local_branch = git.get_current_branch_name(repo_root)
 
@@ -26,7 +35,7 @@ def get_git_url(path_arg: str, line_number: int | None, branch_mode: bool) -> st
     else:
         ref = get_short_hash(repo_root)
 
-    path = get_repo_path(repo_root, full_path)
+    path = get_repo_path(repo_root, abs_path)
 
     url = generate_url(remote_url, {
         "ref": ref,
@@ -35,11 +44,6 @@ def get_git_url(path_arg: str, line_number: int | None, branch_mode: bool) -> st
     })
     
     return url
-
-
-def fail(msg: str) -> NoReturn:
-    print("Error: " + msg, file=sys.stderr)
-    sys.exit(1)
 
 
 def get_ref(repo_root: str, branch_mode: bool, local_branch: str | None):
@@ -52,23 +56,23 @@ def get_remote(repo_root: str, local_branch: str | None) -> str:
         
     remotes = git.get_remotes(repo_root)
     if len(remotes) == 0:
-        fail("No git remotes in this repo.")
+        raise GitUrlError("No git remotes in this repo.")
     elif len(remotes) == 1:
         return remotes[0]
     else:
-        fail("Repo has multiple remotes and no upstream to determine the correct one.")
+        raise GitUrlError("Repo has multiple remotes and no upstream to determine the correct one.")
 
 
 def get_branch(repo_root: str, local_branch: str | None) -> str:
     if local_branch is None:
-        fail("Cannot build a branch-based URL with no branch checked out.")
+        raise GitUrlError("Cannot build a branch-based URL with no branch checked out.")
     upstream_branch = git.get_upstream_branch(repo_root, local_branch)
     return upstream_branch or local_branch
 
 
 def get_short_hash(repo_root: str) -> str:
     if (hash := git.get_short_hash(repo_root)) is None:
-        fail("Unable to fetch the latest commit hash. Does the repo have any commits?")
+        raise GitUrlError("Unable to fetch the latest commit hash. Does the repo have any commits?")
     return hash
 
 
@@ -79,7 +83,7 @@ def get_repo_path(repo_root, full_path) -> str:
     rel_path = os.path.relpath(full_path, repo_root).replace(os.sep, "/")
     
     if not git.in_tree(repo_root, rel_path):
-        fail(f"Path '{rel_path}' is not in the git tree.")
+        raise GitUrlError(f"Path is not in the git index.")
 
     return "/" + rel_path
 
@@ -97,4 +101,4 @@ def generate_url(remote_url: str, url_args: dict[str, str | None]) -> str:
             quoted_args = { k: quote(v) for (k, v) in (match.groupdict() | url_args).items() if v is not None }
             return template.apply(quoted_args)
     
-    fail(f"No config matched remote URL {remote_url}")
+    raise GitUrlError(f"No config matched remote URL {remote_url}")

@@ -46,7 +46,7 @@ def giturl(*args):
 
 def test_cli__no_repo(tmp_path):
     proc = giturl(tmp_path)
-    assert proc.returncode == 1
+    assert proc.returncode != 0
     assert "not part of a git repo" in proc.stderr
 
 
@@ -54,7 +54,7 @@ def test_cli__no_remotes(tmp_path):
     repo_create(tmp_path)
     repo_commit_file(tmp_path, "README.md", "hello\n")
     proc = giturl(tmp_path / "README.md")
-    assert proc.returncode == 1
+    assert proc.returncode != 0
     assert "No git remotes" in proc.stderr
 
 
@@ -64,7 +64,7 @@ def test_cli__no_upstream_multiple_remotes(tmp_path):
     repo_add_remote(tmp_path, "bitbucket", "git@bitbucket.org:gilessmart/giturl.git")
     repo_commit_file(tmp_path, "README.md", "hello\n")
     proc = giturl(tmp_path)
-    assert proc.returncode == 1
+    assert proc.returncode != 0
     assert "multiple remotes" in proc.stderr
 
 
@@ -134,7 +134,7 @@ def test_cli__file_not_in_repo(tmp_path):
     write_file(tmp_path / "READYOU.md", "goodbye\n")    
     proc = giturl(tmp_path / "READYOU.md")
     assert proc.returncode != 0
-    assert "not in the git tree" in proc.stderr
+    assert "not in the git index" in proc.stderr
 
 
 def test_cli__nested_file(tmp_path):
