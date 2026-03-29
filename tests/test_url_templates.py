@@ -13,6 +13,7 @@ def test_TemplateParser_apply__github_template__missing_line_number_argument():
     })
     assert url == "https://github.com/gilessmart/giturl/blob/main/src/giturl/cli.py"
 
+
 def test_TemplateParser_apply__github_template__with_line_number_argument():
     template = parse_template("https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}")
     url = template.apply({
@@ -36,22 +37,32 @@ def test_TemplateSegment_apply__single_fill_point__argument_given():
     result = segment.apply({"account": "gilessmart"})
     assert result == "gilessmart"
 
+
+def test_TemplateSegment_apply__single_fill_point__argument_none():
+    segment = FillPointSegment("{account}", ["account"])
+    result = segment.apply({"account": None})
+    assert result == ""
+
+
 def test_TemplateSegment_apply__single_fill_point__argument_missing():
     segment = FillPointSegment("{account}", ["account"])
     result = segment.apply({})
     assert result == ""
+
 
 def test_TemplateSegment_apply__single_fill_point_with_extra_text__argument_given():
     segment = FillPointSegment("acc={account}", ["account"])
     result = segment.apply({"account": "gilessmart"})
     assert result == "acc=gilessmart"
 
+
 def test_TemplateSegment_apply__single_fill_point_with_extra_text__argument_none():
     segment = FillPointSegment("acc={account}", ["account"])
     result = segment.apply({"account": None})
     assert result == ""
 
-def test_TemplateSegment_apply__single_fill_point_with_extra_text__argument_empty_string():
+
+def test_TemplateSegment_apply__single_fill_point_with_extra_text__argument_missing():
     segment = FillPointSegment("acc={account}", ["account"])
-    result = segment.apply({"account": ""})
+    result = segment.apply({})
     assert result == ""

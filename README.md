@@ -78,20 +78,14 @@ pip install --user --force-reinstall .
 
 ### Tests
 
-**Bash tests**
 ```
-tests/run-tests.sh [-c]
-```
-`-c` option causes test repos used by the tests to be cleared and re-cloned.
-
-**Python tests**
-```
-pytest
+pytest -v
 ```
 
 ## Potential Enhancements
 
 * Extract the config into a config file.
+* Install using pipx.
 * Add option to open the URL in the user's browser.
 * If no path is supplied, produce the URL of the repository root.
 * Replace `-l` option with `path[:line_number]`.

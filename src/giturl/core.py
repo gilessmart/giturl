@@ -18,7 +18,7 @@ def get_git_url(config: dict[str, str], path: str, line_number: int | None = Non
         raise GitUrlError(f"Path is not an existing file or directory.")
 
     if line_number is not None and os.path.isdir(abs_path):
-        raise GitUrlError("Line number is invalid when path is a directory.")
+        raise GitUrlError("Line number is invalid for directory paths.")
     
     repo_root = git.get_repo_root(abs_path)
     if repo_root is None:
