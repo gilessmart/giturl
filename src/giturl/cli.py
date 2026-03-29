@@ -5,8 +5,9 @@ from giturl.core import get_git_url, GitUrlError
 
 
 config = {
-    r"github.com[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
-    r"bitbucket.org[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
+    r"github\.com[:/](?P<account>.+?)/(?P<repo>.+).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
+    r"bitbucket\.org[:/](?P<account>.+?)/(?P<repo>.+).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
+    r"gitlab\.com[:/](?P<account>.+?)/(?P<repo>.+).git": "https://gitlab.com/{{account}}/{{repo}}/-/blob/{{ref}}{{path}}{#L{line_number}}",
 }
 
 
