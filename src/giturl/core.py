@@ -11,7 +11,7 @@ class GitUrlError(Exception):
     pass
 
 
-def get_git_url(path: str, line_number: int | None, branch_mode: bool) -> str:
+def get_git_url(config: dict[str, str], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
     abs_path = os.path.abspath(path)
     
     if not os.path.isfile(abs_path) and not os.path.isdir(abs_path):
@@ -37,7 +37,7 @@ def get_git_url(path: str, line_number: int | None, branch_mode: bool) -> str:
 
     path = get_repo_path(repo_root, abs_path)
 
-    url = generate_url(remote_url, {
+    url = generate_url(config, remote_url, {
         "ref": ref,
         "path": path,
         "line_number": str(line_number) if line_number is not None else None,
@@ -88,13 +88,8 @@ def get_repo_path(repo_root, full_path) -> str:
     return "/" + rel_path
 
 
-def generate_url(remote_url: str, url_args: dict[str, str | None]) -> str:
-    url_configs = {
-        r"github.com[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
-        r"bitbucket.org[:/](?P<account>.+?)/(?P<repo>.+?).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
-    }
-
-    for pattern, template_str in url_configs.items():
+def generate_url(config: dict[str, str], remote_url: str, url_args: dict[str, str | None]) -> str:
+    for pattern, template_str in config.items():
         match = re.search(pattern, remote_url)
         if match:
             template = parse_template(template_str)
