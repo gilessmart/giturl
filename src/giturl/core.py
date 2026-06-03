@@ -12,77 +12,73 @@ class GitUrlError(Exception):
 
 
 def get_git_url(config: dict[str, str], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
-    abs_path = os.path.abspath(path)
-    
-    if not os.path.isfile(abs_path) and not os.path.isdir(abs_path):
+    if not os.path.isfile(path) and not os.path.isdir(path):
         raise GitUrlError(f"Path is not an existing file or directory.")
 
-    if line_number is not None and os.path.isdir(abs_path):
+    if line_number is not None and os.path.isdir(path):
         raise GitUrlError("Line number is invalid for directory paths.")
     
-    repo_root = git.get_repo_root(abs_path)
-    if repo_root is None:
-        raise GitUrlError(f"Path is not part of a git repo.")
-
-    local_branch = git.get_current_branch_name(repo_root)
-
-    remote = get_remote(repo_root, local_branch)
-    
-    remote_url = git.get_remote_url(repo_root, remote)
-
-    if branch_mode:
-        ref = get_branch(repo_root, local_branch)
-    else:
-        ref = get_short_hash(repo_root)
-
-    path = get_repo_path(repo_root, abs_path)
+    abs_path = os.path.abspath(path)
+    repo_root_path = get_repo_root_path(abs_path)
+    local_branch_name = git.get_current_branch_name(repo_root_path)
+    remote_url = get_remote_url(repo_root_path, local_branch_name)
 
     url = generate_url(config, remote_url, {
-        "ref": ref,
-        "path": path,
+        "ref": get_branch(repo_root_path, local_branch_name) if branch_mode else get_short_hash(repo_root_path),
+        "path": get_repo_path(repo_root_path, abs_path),
         "line_number": str(line_number) if line_number is not None else None,
     })
     
     return url
 
 
-def get_ref(repo_root: str, branch_mode: bool, local_branch: str | None):
-    return get_branch(repo_root, local_branch) if branch_mode else get_short_hash(repo_root)
+def get_repo_root_path(abs_path: str) -> str:
+    repo_root_path = git.get_repo_root_path(abs_path)
+    if repo_root_path is None:
+        raise GitUrlError(f"Path is not part of a git repo.")
+    return repo_root_path
 
 
-def get_remote(repo_root: str, local_branch: str | None) -> str:
-    if local_branch is not None and (remote := git.get_upstream_remote(repo_root, local_branch)) is not None:
+def get_remote_url(repo_root_path: str, local_branch_name: str | None) -> str:
+    remote = get_remote(repo_root_path, local_branch_name)
+    return git.get_remote_url(repo_root_path, remote)
+
+
+def get_remote(repo_root_path: str, local_branch_name: str | None) -> str:
+    # if there's a local branch checked out and it's tracking a remote, we'll use that
+    if local_branch_name is not None and (remote := git.get_upstream_remote(repo_root_path, local_branch_name)) is not None:
         return remote
         
-    remotes = git.get_remotes(repo_root)
+    remotes = git.get_remotes(repo_root_path)
     if len(remotes) == 0:
         raise GitUrlError("No git remotes in this repo.")
     elif len(remotes) == 1:
         return remotes[0]
     else:
-        raise GitUrlError("Repo has multiple remotes and no upstream to determine the correct one.")
+        raise GitUrlError("Repo has multiple remotes but no upstream to indicate the correct one.")
 
 
-def get_branch(repo_root: str, local_branch: str | None) -> str:
-    if local_branch is None:
+def get_branch(repo_root_path: str, local_branch_name: str | None) -> str:
+    if local_branch_name is None:
         raise GitUrlError("Cannot build a branch-based URL with no branch checked out.")
-    upstream_branch = git.get_upstream_branch(repo_root, local_branch)
-    return upstream_branch or local_branch
+    upstream_branch = git.get_upstream_branch(repo_root_path, local_branch_name)
+    # if there's no upstream branch, use the local branch name
+    return upstream_branch or local_branch_name
 
 
-def get_short_hash(repo_root: str) -> str:
-    if (hash := git.get_short_hash(repo_root)) is None:
+def get_short_hash(repo_root_path: str) -> str:
+    if (hash := git.get_short_hash(repo_root_path)) is None:
         raise GitUrlError("Unable to fetch the latest commit hash. Does the repo have any commits?")
     return hash
 
 
-def get_repo_path(repo_root, full_path) -> str:
-    if os.path.samefile(full_path, repo_root):
+def get_repo_path(repo_root_path, full_path) -> str:
+    if os.path.samefile(full_path, repo_root_path):
         return ""
 
-    rel_path = os.path.relpath(full_path, repo_root).replace(os.sep, "/")
+    rel_path = os.path.relpath(full_path, repo_root_path).replace(os.sep, "/")
     
-    if not git.in_tree(repo_root, rel_path):
+    if not git.in_tree(repo_root_path, rel_path):
         raise GitUrlError(f"Path is not in the git index.")
 
     return "/" + rel_path

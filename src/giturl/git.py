@@ -2,7 +2,7 @@ import os
 import subprocess
 
 
-def get_repo_root(path: str) -> str | None:
+def get_repo_root_path(path: str) -> str | None:
     dir_path = path if os.path.isdir(path) else os.path.dirname(path)
     result = subprocess.run(["git", "rev-parse", "--show-toplevel"], text=True, capture_output=True, encoding="utf-8", cwd=dir_path)
     # normalise the path because git returns a path with forward slashes on Windows

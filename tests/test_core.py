@@ -44,7 +44,7 @@ def test_core__no_upstream_multiple_remotes(tmp_path):
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     with pytest.raises(GitUrlError) as exinfo:
         get_git_url(defaultConfig, tmp_path / "README.md")
-    assert "Repo has multiple remotes and no upstream" in str(exinfo.value)
+    assert "Repo has multiple remotes but no upstream" in str(exinfo.value)
 
 
 def test_core__branch_option_with_detached_head(tmp_path):
