@@ -2,13 +2,9 @@ import os
 import re
 from urllib.parse import quote
 
+from giturl.errors import GitUrlError
 from giturl.git import GitRepo
 from giturl.url_templates import parse_template
-
-
-class GitUrlError(Exception):
-    """Exception raised for errors specific to giturl operations."""
-    pass
 
 
 def get_git_url(config: dict[str, str], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
