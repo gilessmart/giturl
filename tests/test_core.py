@@ -26,7 +26,7 @@ def test_core__line_number_with_directory_path(tmp_path):
 def test_core__no_repo(tmp_path):
     with pytest.raises(GitUrlError) as exinfo:
         get_git_url(defaultConfig, tmp_path)
-    assert "Path is not part of a git repo" in str(exinfo.value)
+    assert "Path is not in a git repo" in str(exinfo.value)
 
 
 def test_core__no_remotes(tmp_path):
@@ -34,7 +34,7 @@ def test_core__no_remotes(tmp_path):
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     with pytest.raises(GitUrlError) as exinfo:
         get_git_url(defaultConfig, tmp_path / "README.md")
-    assert "No git remotes" in str(exinfo.value)
+    assert "Repo has no remotes" in str(exinfo.value)
 
 
 def test_core__no_upstream_multiple_remotes(tmp_path):
