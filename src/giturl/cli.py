@@ -1,13 +1,13 @@
 import argparse
 import pathlib
 
-from giturl.core import get_git_url, GitUrlError
+from giturl.core import ServiceType, get_git_url, GitUrlError
 
 
-config = {
-    r"github\.com[:/](?P<account>.+?)/(?P<repo>.+).git": "https://github.com/{{account}}/{{repo}}/blob/{{ref}}{{path}}{#L{line_number}}",
-    r"bitbucket\.org[:/](?P<account>.+?)/(?P<repo>.+).git": "https://bitbucket.org/{{account}}/{{repo}}/src/{{ref}}{{path}}{#line-{line_number}}",
-    r"gitlab\.com[:/](?P<account>.+?)/(?P<repo>.+).git": "https://gitlab.com/{{account}}/{{repo}}/-/blob/{{ref}}{{path}}{#L{line_number}}",
+default_config: dict[str, ServiceType] = {
+    "github.com": ServiceType.GitHub,
+    "bitbucket.org": ServiceType.BitBucket,
+    "gitlab.com": ServiceType.GitLab
 }
 
 
@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        url = get_git_url(config, args.path, args.line_number, args.branch_mode)
+        url = get_git_url(default_config, args.path, args.line_number, args.branch_mode)
         print(url)
     except GitUrlError as e:
         parser.error(str(e))

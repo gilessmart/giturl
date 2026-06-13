@@ -5,7 +5,8 @@ import subprocess
 class GitRepo:
     @staticmethod
     def from_path(path: str) -> GitRepo | None:
-        dir_path = path if os.path.isdir(path) else os.path.dirname(path)
+        abs_path = os.path.abspath(path)
+        dir_path = path if os.path.isdir(abs_path) else os.path.dirname(abs_path)
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
             text=True,
@@ -24,7 +25,7 @@ class GitRepo:
 
     def in_tree(self, path: str) -> bool:
         null_terminated_paths = subprocess.check_output(
-            ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", path], 
+            ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", os.path.abspath(path)], 
             text=True,
             encoding="utf-8",
             cwd=self.root_path)

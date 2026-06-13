@@ -20,10 +20,10 @@ def test_cli__github(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/my-account/my-repo/blob/{hash}/subdir/info.txt"
 
-    # # folder path
-    # proc = giturl(tmp_path / "subdir")
-    # assert proc.returncode == 0
-    # assert proc.stdout.strip() == f"https://github.com/my-account/my-repo/tree/{hash}/subdir"
+    # folder path
+    proc = giturl(tmp_path / "subdir")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == f"https://github.com/my-account/my-repo/tree/{hash}/subdir"
 
     # line number
     proc = giturl("-l", "7", tmp_path / "subdir/info.txt")
@@ -55,7 +55,7 @@ def test_cli__bitbucket(tmp_path):
     # line number
     proc = giturl("-l", "5", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
-    assert proc.stdout.strip() == f"https://bitbucket.org/my-account/my-repo/src/{hash}/subdir/info.txt#line-5"
+    assert proc.stdout.strip() == f"https://bitbucket.org/my-account/my-repo/src/{hash}/subdir/info.txt#lines-5"
 
     # branch mode
     proc = giturl("-b", tmp_path / "subdir/info.txt")
@@ -76,20 +76,20 @@ def test_cli__gitlab(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/my-project/-/blob/{hash}/subdir/info.txt"
 
-    # folder path - not supported
-    # proc = giturl(tmp_path / "subdir")
-    # assert proc.returncode == 0
-    # assert proc.stdout.strip() == f"https://gitlab.com/my-org/my-project/-/tree/{hash}/subdir"
+    # folder path
+    proc = giturl(tmp_path / "subdir")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == f"https://gitlab.com/my-org/my-project/-/tree/{hash}/subdir"
 
     # line number
     proc = giturl("-l", "10", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/my-project/-/blob/{hash}/subdir/info.txt#L10"
 
-    # branch mode - query string not supported
-    # proc = giturl("-b", tmp_path / "subdir/info.txt")
-    # assert proc.returncode == 0
-    # assert proc.stdout.strip() == "https://gitlab.com/my-org/my-project/-/blob/main/subdir/info.txt?ref_type=heads"
+    # branch mode
+    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "https://gitlab.com/my-org/my-project/-/blob/main/subdir/info.txt?ref_type=heads"
 
 def test_cli__gitlab_subproject(tmp_path):
     # Repo at https://gitlab.com/gitlab-org/ai/skills used to determine requirements
@@ -104,17 +104,17 @@ def test_cli__gitlab_subproject(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/project/sub-project/-/blob/{hash}/subdir/info.txt"
 
-    # folder path - not supported
-    # proc = giturl(tmp_path / "subdir")
-    # assert proc.returncode == 0
-    # assert proc.stdout.strip() == f"https://gitlab.com/my-org/project/sub-project/-/tree/{hash}/subdir"
+    # folder path
+    proc = giturl(tmp_path / "subdir")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == f"https://gitlab.com/my-org/project/sub-project/-/tree/{hash}/subdir"
 
     # line number
     proc = giturl("-l", "10", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/project/sub-project/-/blob/{hash}/subdir/info.txt#L10"
 
-    # branch mode - query string not supported
-    # proc = giturl("-b", tmp_path / "subdir/info.txt")
-    # assert proc.returncode == 0
-    # assert proc.stdout.strip() == "https://gitlab.com/my-org/project/sub-project/-/blob/main/subdir/info.txt?ref_type=heads"
+    # branch mode
+    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    assert proc.returncode == 0
+    assert proc.stdout.strip() == "https://gitlab.com/my-org/project/sub-project/-/blob/main/subdir/info.txt?ref_type=heads"
