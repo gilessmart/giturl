@@ -1,9 +1,10 @@
 from enum import Enum, auto
 import os
 
+from giturl import urlgen
+from giturl.urlgen import Ref, RefType
 from giturl.errors import GitUrlError
 from giturl.git import GitRepo
-from giturl import urlgen
 from giturl.remoteurl import RemoteUrl, parse_remote_url
 
 
@@ -31,7 +32,8 @@ def get_git_url(config: dict[str, ServiceType], path: str, line_number: int | No
     generator = get_url_generator(config, repo, remote_url)
 
     relative_path = get_relative_path(path, repo)
-    return generator.generate_url(relative_path, line_number, branch_mode)
+    ref = get_ref(repo, branch_mode)
+    return generator.generate_url(relative_path, line_number, ref)
 
 
 def get_url_generator(config: dict[str, ServiceType], repo: GitRepo, remote_url: RemoteUrl) -> urlgen.UrlGenerator:
@@ -71,3 +73,17 @@ def get_relative_path(path: str, repo: GitRepo) -> str:
     if os.path.samefile(path, repo.root_path):
         return ""
     return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
+
+
+def get_ref(repo: GitRepo, branch_mode: bool) -> Ref:
+    if branch_mode:
+        local_branch_name = repo.get_current_branch_name()
+        if local_branch_name == None:
+            raise GitUrlError("Cannot build a branch-based URL with no branch checked out")
+        branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
+        return Ref(RefType.Branch, branch_name)
+    
+    hash = repo.get_short_hash()
+    if hash is None:
+        raise GitUrlError("Unable to fetch the latest commit hash. Does the repo have any commits?")
+    return Ref(RefType.CommitHash, hash)
