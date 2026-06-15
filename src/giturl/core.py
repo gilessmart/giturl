@@ -37,14 +37,14 @@ def get_git_url(config: dict[str, ServiceType], path: str, line_number: int | No
 
 
 def get_url_generator(config: dict[str, ServiceType], repo: GitRepo, remote_url: RemoteUrl) -> urlgen.UrlGenerator:
-    scheme = config.get(remote_url.host)
-    if scheme is None:
+    service_type = config.get(remote_url.host)
+    if service_type is None:
         raise GitUrlError("No config matched remote URL")
     generator = {
         ServiceType.GitHub: urlgen.GitHubUrlGenerator,
         ServiceType.BitBucket: urlgen.BitBucketUrlGenerator,
         ServiceType.GitLab: urlgen.GitLabUrlGenerator
-    }[scheme]
+    }[service_type]
     return generator.create(remote_url, repo)
 
 
