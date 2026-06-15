@@ -1,6 +1,6 @@
 import pytest
 
-from giturl.core import GitUrlError, get_git_url
+from giturl.app import GitUrlError, get_git_url
 from giturl.cli import default_config
 import helpers
 

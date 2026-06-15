@@ -9,7 +9,7 @@ def giturl(*args):
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
-def test_cli__github(tmp_path):
+def test__cli__github(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:my-account/my-repo.git")
     helpers.repo_commit_file(tmp_path, "subdir/info.txt", "hello\n")
@@ -36,7 +36,7 @@ def test_cli__github(tmp_path):
     assert proc.stdout.strip() == "https://github.com/my-account/my-repo/blob/main/subdir/info.txt"
 
 
-def test_cli__bitbucket(tmp_path):
+def test__cli__bitbucket(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", "git@bitbucket.org:my-account/my-repo.git")
     helpers.repo_commit_file(tmp_path, "subdir/info.txt", "hello\n")
@@ -63,7 +63,7 @@ def test_cli__bitbucket(tmp_path):
     assert proc.stdout.strip() == "https://bitbucket.org/my-account/my-repo/src/main/subdir/info.txt"
 
 
-def test_cli__gitlab(tmp_path):
+def test__cli__gitlab(tmp_path):
     # Repo at https://gitlab.com/gitlab-org/gitlab used to determine requirements
 
     helpers.repo_create(tmp_path)
@@ -91,7 +91,7 @@ def test_cli__gitlab(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == "https://gitlab.com/my-org/my-project/-/blob/main/subdir/info.txt?ref_type=heads"
 
-def test_cli__gitlab_subproject(tmp_path):
+def test__cli__gitlab_subproject(tmp_path):
     # Repo at https://gitlab.com/gitlab-org/ai/skills used to determine requirements
 
     helpers.repo_create(tmp_path)

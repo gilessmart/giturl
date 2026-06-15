@@ -10,6 +10,12 @@ from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl
 
 
+class ProviderType(Enum):
+    GitHub = auto()
+    BitBucket = auto()
+    GitLab = auto()
+
+
 class RefType(Enum):
     Branch = auto()
     CommitHash = auto()
@@ -19,6 +25,14 @@ class RefType(Enum):
 class Ref:
     type: RefType
     value: str
+
+
+def get_url_generator_type(provider_type: ProviderType) -> UrlGenerator:
+    return {
+        ProviderType.GitHub: GitHubUrlGenerator,
+        ProviderType.BitBucket: BitBucketUrlGenerator,
+        ProviderType.GitLab: GitLabUrlGenerator
+    }[provider_type]
 
 
 class UrlGenerator(ABC):

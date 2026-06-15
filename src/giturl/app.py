@@ -1,20 +1,12 @@
-from enum import Enum, auto
 import os
 
-from giturl import urlgen
-from giturl.urlgen import Ref, RefType
 from giturl.errors import GitUrlError
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
+from giturl.urlgen import Ref, RefType, ProviderType, get_url_generator_type
 
 
-class ServiceType(Enum):
-    GitHub = auto()
-    BitBucket = auto()
-    GitLab = auto()
-
-
-def get_git_url(config: dict[str, ServiceType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
+def get_git_url(config: dict[str, ProviderType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
         raise GitUrlError("Path is not an existing file or directory.")
 
@@ -28,24 +20,17 @@ def get_git_url(config: dict[str, ServiceType], path: str, line_number: int | No
     if not repo.in_tree(path):
         raise GitUrlError(f"Path {path} is not in the git index.")
 
-    remote_url = get_remote_url(repo)
-    generator = get_url_generator(config, repo, remote_url)
-
-    relative_path = get_relative_path(path, repo)
+    relative_path = get_relative_path(repo, path)
     ref = get_ref(repo, branch_mode)
-    return generator.generate_url(relative_path, line_number, ref)
 
-
-def get_url_generator(config: dict[str, ServiceType], repo: GitRepo, remote_url: RemoteUrl) -> urlgen.UrlGenerator:
-    service_type = config.get(remote_url.host)
-    if service_type is None:
+    remote_url = get_remote_url(repo)
+    provider_type = config.get(remote_url.host)
+    if provider_type is None:
         raise GitUrlError("No config matched remote URL")
-    generator = {
-        ServiceType.GitHub: urlgen.GitHubUrlGenerator,
-        ServiceType.BitBucket: urlgen.BitBucketUrlGenerator,
-        ServiceType.GitLab: urlgen.GitLabUrlGenerator
-    }[service_type]
-    return generator.create(remote_url, repo)
+    
+    url_gen_type = get_url_generator_type(provider_type)
+    url_generator = url_gen_type.create(remote_url, repo)
+    return url_generator.generate_url(relative_path, line_number, ref)
 
 
 def get_remote_url(repo: GitRepo) -> RemoteUrl:
@@ -69,7 +54,7 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         raise GitUrlError("Repo has multiple remotes but no upstream to indicate the correct one.")
 
 
-def get_relative_path(path: str, repo: GitRepo) -> str:
+def get_relative_path(repo: GitRepo, path: str) -> str:
     if os.path.samefile(path, repo.root_path):
         return ""
     return os.path.relpath(path, repo.root_path).replace(os.sep, "/")

@@ -1,13 +1,14 @@
 import argparse
 import pathlib
 
-from giturl.core import ServiceType, get_git_url, GitUrlError
+from giturl.app import get_git_url, GitUrlError
+from giturl.urlgen import ProviderType
 
 
-default_config: dict[str, ServiceType] = {
-    "github.com": ServiceType.GitHub,
-    "bitbucket.org": ServiceType.BitBucket,
-    "gitlab.com": ServiceType.GitLab
+default_config: dict[str, ProviderType] = {
+    "github.com": ProviderType.GitHub,
+    "bitbucket.org": ProviderType.BitBucket,
+    "gitlab.com": ProviderType.GitLab
 }
 
 
