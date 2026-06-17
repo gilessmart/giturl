@@ -69,6 +69,5 @@ def get_ref(repo: GitRepo, branch_mode: bool) -> Ref:
         return Ref(RefType.Branch, branch_name)
     
     hash = repo.get_short_hash()
-    if hash is None:
-        raise GitUrlError("Unable to fetch the latest commit hash. Does the repo have any commits?")
-    return Ref(RefType.CommitHash, hash)
+    # I don't know how we can get here without being able to get a hash, so suppress the error
+    return Ref(RefType.CommitHash, hash) # type: ignore

@@ -24,16 +24,18 @@ class GitRepo:
         self.root_path = root_path
 
     def in_tree(self, path: str) -> bool:
-        null_terminated_paths = subprocess.check_output(
+        result = subprocess.run(
             ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", os.path.abspath(path)], 
             text=True,
+            capture_output=True,
             encoding="utf-8",
             cwd=self.root_path)
-        return null_terminated_paths.count("\x00") > 0
+        return result.stdout.count("\x00") > 0
     
     def get_current_branch_name(self) -> str | None:
         branch = subprocess.check_output(["git", "branch", "--show-current"], text=True, encoding="utf-8", cwd=self.root_path).strip()
-        return branch if branch else None # If the branch name is empty, return None to indicate we're in a detached HEAD state
+        # If the branch name is empty, return None which indicates we're in a detached HEAD state
+        return branch if branch else None
 
     def get_upstream_remote(self, local_branch: str) -> str | None:
         result = subprocess.run(
@@ -62,4 +64,5 @@ class GitRepo:
 
     def get_short_hash(self) -> str | None:
         result = subprocess.run(["git", "rev-parse", "--short", "HEAD"], text=True, capture_output=True, cwd=self.root_path)
-        return result.stdout.strip() if result.returncode == 0 else None # Return None if the command fails, e.g. if there are no commits in the repository
+        # Return None if the command fails, e.g. if there are no commits in the repository
+        return result.stdout.strip() if result.returncode == 0 else None
