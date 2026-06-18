@@ -1,6 +1,6 @@
 # Git URL Generator
 
-Generates a GitHub or BitBucket website URL for a file or folder that's part of a repo hosted on one of those services.
+Generates a website URL for a file or folder that's part of a repo hosted on GitHub, BitBucket or GitLab.
 
 ## Usage
 
@@ -39,22 +39,16 @@ giturl [-l line_number] [-b] <path>
 
 ## End User Installation
 
+(From the root of a local clone of this repo)
 ```
 pip install --user .
 ```
+The directory where `pip` installs modules may need to be added to your PATH environment variable - (`pip` will report if this is the case).
 
-The directory where `pip` installs modules may need to be added to your PATH environment variable.
-
-**Upgrade**
-
-```
-pip install --user --upgrade .
-```
-
-**Reinstall**
+**Uninstall**
 
 ```
-pip install --user --force-reinstall .
+pip uninstall giturl
 ```
 
 ## Development Setup
