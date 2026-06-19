@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 import re
 
-from giturl.errors import GitUrlError
-
 
 @dataclass
 class RemoteUrl:
@@ -25,4 +23,4 @@ def parse_remote_url(s: str) -> RemoteUrl:
         if match is not None:
             return RemoteUrl(s, match["host"], match["path"].removeprefix("/"))
     
-    raise GitUrlError(f"Remote URL {s} is unsupported")
+    raise Exception(f"Remote URL {s} is unsupported")

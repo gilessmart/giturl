@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-from giturl.app import get_git_url, GitUrlError
+from giturl.app import get_git_url
 from giturl.urlgen import ProviderType
 
 
@@ -22,5 +22,5 @@ def main():
     try:
         url = get_git_url(default_config, args.path, args.line_number, args.branch_mode)
         print(url)
-    except GitUrlError as e:
+    except Exception as e:
         parser.error(str(e))

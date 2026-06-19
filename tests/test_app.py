@@ -1,6 +1,6 @@
 import pytest
 
-from giturl.app import GitUrlError, get_git_url
+from giturl.app import get_git_url
 from giturl.cli import default_config
 import helpers
 
@@ -9,7 +9,7 @@ def test__get_git_url__no_such_file(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "READYOU.md")
     assert "Path is not an existing file or directory" in str(exinfo.value)
 
@@ -18,13 +18,13 @@ def test__get_git_url__line_number_with_directory_path(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path, 20)
     assert "Line number is invalid for directory paths" in str(exinfo.value)
 
 
 def test__get_git_url__no_repo(tmp_path):
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path)
     assert "Path is not in a git repo" in str(exinfo.value)
 
@@ -34,7 +34,7 @@ def test__get_git_url__path_not_in_index(tmp_path):
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     helpers.write_file(tmp_path / "main.c", "#include <stdio.h>")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "main.c")
     assert "not in the git index" in str(exinfo.value)
 
@@ -43,7 +43,7 @@ def test__get_git_url__repo_with_no_commits(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.write_file(tmp_path / "README.md" , "hello\n")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md")
     assert "not in the git index" in str(exinfo.value)
 
@@ -51,7 +51,7 @@ def test__get_git_url__repo_with_no_commits(tmp_path):
 def test__get_git_url__no_remotes(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md")
     assert "Repo has no remotes" in str(exinfo.value)
 
@@ -61,7 +61,7 @@ def test__get_git_url__no_upstream_multiple_remotes(tmp_path):
     helpers.repo_add_remote(tmp_path, "github", "git@github.com:gilessmart/giturl.git")
     helpers.repo_add_remote(tmp_path, "bitbucket", "git@bitbucket.org:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md")
     assert "Repo has multiple remotes but no upstream" in str(exinfo.value)
 
@@ -70,7 +70,7 @@ def test__get_git_url__local_remote_url(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     helpers.repo_add_remote(tmp_path, "origin", "file:///Users/giles/repos/giturl")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path)
     assert "Remote URL file:///Users/giles/repos/giturl is unsupported" in str(exinfo.value)
 
@@ -79,7 +79,7 @@ def test__get_git_url__no_matching_config(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", "git@github.acme.corp:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md")
     assert "No config matched remote URL" in str(exinfo.value)
 
@@ -91,7 +91,7 @@ def test__get_git_url__branch_option__detached_head(tmp_path):
     old_hash = helpers.repo_get_current_hash(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello 2\n")
     helpers.repo_checkout(tmp_path, old_hash)
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md", branch_mode=True)
     assert "Cannot build a branch-based URL with no branch checked out" in str(exinfo.value)
 
@@ -105,7 +105,7 @@ def test__get_git_url__invalid_remote_url_paths(tmp_path, remote_url, expected_e
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", remote_url)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    with pytest.raises(GitUrlError) as exinfo:
+    with pytest.raises(Exception) as exinfo:
         get_git_url(default_config, tmp_path / "README.md")
     assert str(exinfo.value) == expected_error_msg
 

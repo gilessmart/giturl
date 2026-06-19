@@ -1,6 +1,5 @@
 import os
 
-from giturl.errors import GitUrlError
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
 from giturl.urlgen import Ref, RefType, ProviderType, get_url_generator_type
@@ -8,17 +7,17 @@ from giturl.urlgen import Ref, RefType, ProviderType, get_url_generator_type
 
 def get_git_url(config: dict[str, ProviderType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
-        raise GitUrlError("Path is not an existing file or directory.")
+        raise Exception("Path is not an existing file or directory.")
 
     if line_number is not None and os.path.isdir(path):
-        raise GitUrlError("Line number is invalid for directory paths.")
+        raise Exception("Line number is invalid for directory paths.")
     
     repo = GitRepo.from_path(path)
     if repo is None:
-        raise GitUrlError("Path is not in a git repo.")
+        raise Exception("Path is not in a git repo.")
         
     if not repo.in_tree(path):
-        raise GitUrlError(f"Path {path} is not in the git index.")
+        raise Exception(f"Path {path} is not in the git index.")
 
     relative_path = get_relative_path(repo, path)
     ref = get_ref(repo, branch_mode)
@@ -26,7 +25,7 @@ def get_git_url(config: dict[str, ProviderType], path: str, line_number: int | N
     remote_url = get_remote_url(repo)
     provider_type = config.get(remote_url.host)
     if provider_type is None:
-        raise GitUrlError("No config matched remote URL")
+        raise Exception("No config matched remote URL")
     
     url_gen_type = get_url_generator_type(provider_type)
     url_generator = url_gen_type.create(remote_url, repo)
@@ -49,9 +48,9 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         return parse_remote_url(url)
     # otherwise we have to error out
     elif len(remotes) == 0:
-        raise GitUrlError("Repo has no remotes.")
+        raise Exception("Repo has no remotes.")
     else: # len(remotes) > 1
-        raise GitUrlError("Repo has multiple remotes but no upstream to indicate the correct one.")
+        raise Exception("Repo has multiple remotes but no upstream to indicate the correct one.")
 
 
 def get_relative_path(repo: GitRepo, path: str) -> str:
@@ -64,7 +63,7 @@ def get_ref(repo: GitRepo, branch_mode: bool) -> Ref:
     if branch_mode:
         local_branch_name = repo.get_current_branch_name()
         if local_branch_name == None:
-            raise GitUrlError("Cannot build a branch-based URL with no branch checked out")
+            raise Exception("Cannot build a branch-based URL with no branch checked out")
         branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
         return Ref(RefType.Branch, branch_name)
     

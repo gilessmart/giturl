@@ -5,7 +5,6 @@ from urllib.parse import quote
 import os
 import re
 
-from giturl.errors import GitUrlError
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl
 
@@ -51,7 +50,7 @@ class GitHubUrlGenerator(UrlGenerator):
     def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise GitUrlError(f"Invalid GitHub remote URL path '{remote_url.path}'")
+            raise Exception(f"Invalid GitHub remote URL path '{remote_url.path}'")
         return GitHubUrlGenerator(repo, remote_url.host, match["account_name"], match["repo_name"])
 
     def __init__(self, repo: GitRepo, domain: str, account_name: str, repo_name: str):
@@ -77,7 +76,7 @@ class BitBucketUrlGenerator(UrlGenerator):
     def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise GitUrlError(f"Invalid BitBucket remote URL path '{remote_url.path}'")
+            raise Exception(f"Invalid BitBucket remote URL path '{remote_url.path}'")
         return BitBucketUrlGenerator(repo, remote_url.host, match["account_name"], match["repo_name"])
     
     def __init__(self, repo: GitRepo, domain: str, account_name: str, repo_name: str):
@@ -101,7 +100,7 @@ class GitLabUrlGenerator(UrlGenerator):
     def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
         match = re.search(r"(?P<org_name>.+?)/(?P<repo_path>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise GitUrlError(f"Invalid GitLab remote URL path '{remote_url.path}'")
+            raise Exception(f"Invalid GitLab remote URL path '{remote_url.path}'")
         return GitLabUrlGenerator(repo, remote_url.host, match["org_name"], match["repo_path"])
     
     def __init__(self, repo: GitRepo, domain: str, org_name: str, repo_path: str):
