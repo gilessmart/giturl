@@ -2,13 +2,18 @@
 name = "giturl"
 version = "0.1.0"
 requires-python = ">=3.2"
-dependencies = []
+dependencies = [
+    "platformdirs~=4.0"
+]
 
 [project.scripts]
 giturl = "giturl.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = [
+    "pytest",
+    "pytest-cov"
+]
 
 [build-system]
 requires = ["setuptools"]
