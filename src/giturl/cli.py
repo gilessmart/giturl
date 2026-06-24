@@ -2,13 +2,13 @@ import argparse
 import pathlib
 
 from giturl.app import get_git_url
-from giturl.urlgen import ProviderType
+from giturl.urlgen import ForgeType
 
 
-default_config: dict[str, ProviderType] = {
-    "github.com": ProviderType.GitHub,
-    "bitbucket.org": ProviderType.BitBucket,
-    "gitlab.com": ProviderType.GitLab
+default_forges: dict[str, ForgeType] = {
+    "github.com": ForgeType.GitHub,
+    "bitbucket.org": ForgeType.BitBucket,
+    "gitlab.com": ForgeType.GitLab
 }
 
 
@@ -20,7 +20,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        url = get_git_url(default_config, args.path, args.line_number, args.branch_mode)
+        url = get_git_url(default_forges, args.path, args.line_number, args.branch_mode)
         print(url)
     except Exception as e:
         parser.error(str(e))

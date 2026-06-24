@@ -2,10 +2,10 @@ import os
 
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
-from giturl.urlgen import Ref, RefType, ProviderType, get_url_generator_type
+from giturl.urlgen import Ref, RefType, ForgeType, get_url_generator_type
 
 
-def get_git_url(config: dict[str, ProviderType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
+def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
         raise Exception("Path is not an existing file or directory.")
 
@@ -23,11 +23,11 @@ def get_git_url(config: dict[str, ProviderType], path: str, line_number: int | N
     ref = get_ref(repo, branch_mode)
 
     remote_url = get_remote_url(repo)
-    provider_type = config.get(remote_url.host)
-    if provider_type is None:
+    forge_type = forge_config.get(remote_url.host)
+    if forge_type is None:
         raise Exception("No config matched remote URL")
     
-    url_gen_type = get_url_generator_type(provider_type)
+    url_gen_type = get_url_generator_type(forge_type)
     url_generator = url_gen_type.create(remote_url, repo)
     return url_generator.generate_url(relative_path, line_number, ref)
 

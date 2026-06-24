@@ -9,7 +9,7 @@ from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl
 
 
-class ProviderType(Enum):
+class ForgeType(Enum):
     GitHub = auto()
     BitBucket = auto()
     GitLab = auto()
@@ -26,12 +26,12 @@ class Ref:
     value: str
 
 
-def get_url_generator_type(provider_type: ProviderType) -> UrlGenerator:
+def get_url_generator_type(forge_type: ForgeType) -> UrlGenerator:
     return {
-        ProviderType.GitHub: GitHubUrlGenerator,
-        ProviderType.BitBucket: BitBucketUrlGenerator,
-        ProviderType.GitLab: GitLabUrlGenerator
-    }[provider_type]
+        ForgeType.GitHub: GitHubUrlGenerator,
+        ForgeType.BitBucket: BitBucketUrlGenerator,
+        ForgeType.GitLab: GitLabUrlGenerator
+    }[forge_type]
 
 
 class UrlGenerator(ABC):
