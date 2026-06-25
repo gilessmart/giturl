@@ -12,7 +12,7 @@ default_forges: dict[str, ForgeType] = {
 }
 
 def get_forge_config() -> dict[str, ForgeType]:
-    config_file_path = user_config_path("giturl") / "config.toml"
+    config_file_path = user_config_path("giturl", roaming=True, appauthor=False) / "config.toml"
     if not config_file_path.exists():
         return default_forges
     

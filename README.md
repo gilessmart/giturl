@@ -63,9 +63,9 @@ The expected location of the configuration file depends on which OS you're using
 
 * **Linux**: `${XDG_CONFIG_HOME:-~/.config}/giturl/config.toml`
 * **MacOS**: `$HOME/Library/Application Support/giturl/config.toml`
-* **Windows**: `%LOCALAPPDATA%\giturl\giturl\config.toml`
+* **Windows**: `%APPDATA%\giturl\config.toml`
 
-Cnofigure your self-hosted git forge instance as follows:
+Configure your self-hosted git forge instances as follows:
 
 ```toml
 [forges]
