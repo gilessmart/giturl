@@ -1,7 +1,7 @@
 import pytest
 
-from giturl.app import get_git_url
-from giturl.cli import default_forges
+from giturl.urlgen import get_git_url
+from giturl.config import default_forges
 import helpers
 
 

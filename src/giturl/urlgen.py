@@ -1,127 +1,73 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum, auto
-from urllib.parse import quote
 import os
-import re
 
 from giturl.git import GitRepo
-from giturl.remoteurl import RemoteUrl
+from giturl.remoteurl import RemoteUrl, parse_remote_url
+from giturl.types import ForgeType, Ref, RefType
+from giturl.weburl import get_url_generator_type
 
 
-class ForgeType(Enum):
-    GitHub = auto()
-    BitBucket = auto()
-    GitLab = auto()
+def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
+    if not os.path.isfile(path) and not os.path.isdir(path):
+        raise Exception("Path is not an existing file or directory.")
 
-
-class RefType(Enum):
-    Branch = auto()
-    CommitHash = auto()
-
-
-@dataclass
-class Ref:
-    type: RefType
-    value: str
-
-
-def get_url_generator_type(forge_type: ForgeType) -> UrlGenerator:
-    return {
-        ForgeType.GitHub: GitHubUrlGenerator,
-        ForgeType.BitBucket: BitBucketUrlGenerator,
-        ForgeType.GitLab: GitLabUrlGenerator
-    }[forge_type]
-
-
-class UrlGenerator(ABC):
-    @staticmethod
-    @abstractmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
-        pass
-
-    @abstractmethod
-    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str:
-        pass
-
-
-class GitHubUrlGenerator(UrlGenerator):
-    @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
-        match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
-        if match is None:
-            raise Exception(f"Invalid GitHub remote URL path '{remote_url.path}'")
-        return GitHubUrlGenerator(repo, remote_url.host, match["account_name"], match["repo_name"])
-
-    def __init__(self, repo: GitRepo, domain: str, account_name: str, repo_name: str):
-        self.repo = repo
-        self.domain = domain
-        self.account_name = account_name
-        self.repo_name = repo_name
-
-    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str:
-        domain = quote(self.domain)
-        account_name = quote(self.account_name)
-        repo_name = quote(self.repo_name)
-        is_path_dir = is_dir(self.repo, relative_path)
-        tree_or_blob = "tree" if is_path_dir else "blob"
-        refval = quote(ref.value)
-        path = quote(relative_path)
-        anchor = f"#L{line_number}" if line_number else ""
-        return f"https://{domain}/{account_name}/{repo_name}/{tree_or_blob}/{refval}/{path}{anchor}"
-
-
-class BitBucketUrlGenerator(UrlGenerator):
-    @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
-        match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
-        if match is None:
-            raise Exception(f"Invalid BitBucket remote URL path '{remote_url.path}'")
-        return BitBucketUrlGenerator(repo, remote_url.host, match["account_name"], match["repo_name"])
+    if line_number is not None and os.path.isdir(path):
+        raise Exception("Line number is invalid for directory paths.")
     
-    def __init__(self, repo: GitRepo, domain: str, account_name: str, repo_name: str):
-        self.repo = repo
-        self.domain = domain
-        self.account_name = account_name
-        self.repo_name = repo_name
+    repo = GitRepo.from_path(path)
+    if repo is None:
+        raise Exception("Path is not in a git repo.")
+        
+    if not repo.in_tree(path):
+        raise Exception(f"Path {path} is not in the git index.")
 
-    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str:
-        domain = quote(self.domain)
-        account_name = quote(self.account_name)
-        repo_name = quote(self.repo_name)
-        refval = quote(ref.value)
-        path = quote(relative_path)
-        anchor = f"#lines-{line_number}" if line_number else ""
-        return f"https://{domain}/{account_name}/{repo_name}/src/{refval}/{path}{anchor}"
+    relative_path = get_relative_path(repo, path)
+    ref = get_ref(repo, branch_mode)
 
-
-class GitLabUrlGenerator(UrlGenerator):
-    @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
-        match = re.search(r"(?P<org_name>.+?)/(?P<repo_path>.+).git", remote_url.path, re.IGNORECASE)
-        if match is None:
-            raise Exception(f"Invalid GitLab remote URL path '{remote_url.path}'")
-        return GitLabUrlGenerator(repo, remote_url.host, match["org_name"], match["repo_path"])
+    remote_url = get_remote_url(repo)
+    forge_type = forge_config.get(remote_url.host)
+    if forge_type is None:
+        raise Exception("No config matched remote URL")
     
-    def __init__(self, repo: GitRepo, domain: str, org_name: str, repo_path: str):
-        self.repo = repo
-        self.domain = domain
-        self.org_name = org_name
-        self.repo_path = repo_path
-
-    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str:
-        domain = quote(self.domain)
-        org_name = quote(self.org_name)
-        repo_path = quote(self.repo_path)
-        is_path_dir = is_dir(self.repo, relative_path)
-        tree_or_blob = "tree" if is_path_dir else "blob"
-        refval = quote(ref.value)
-        path = quote(relative_path)
-        qs = "?ref_type=heads" if ref.type == RefType.Branch else ""
-        anchor = f"#L{line_number}" if line_number else ""
-        return f"https://{domain}/{org_name}/{repo_path}/-/{tree_or_blob}/{refval}/{path}{qs}{anchor}"
+    url_gen_type = get_url_generator_type(forge_type)
+    url_generator = url_gen_type.create(remote_url, repo)
+    return url_generator.generate_url(relative_path, line_number, ref)
 
 
-def is_dir(repo: GitRepo, relative_path: str) -> bool:
-    full_path = os.path.join(repo.root_path, relative_path)
-    return os.path.isdir(full_path)
+def get_remote_url(repo: GitRepo) -> RemoteUrl:
+    local_branch_name = repo.get_current_branch_name()
+    # if there's a local branch checked out and it's tracking a remote branch, we'll use that remote branch
+    if local_branch_name is not None:
+        remote = repo.get_upstream_remote(local_branch_name)
+        if remote is not None:
+            url = repo.get_remote_url(remote)
+            return parse_remote_url(url)
+    
+    # else if there's exactly 1 remote branch, we'll default to that
+    remotes = repo.get_remotes()
+    if len(remotes) == 1:
+        url = repo.get_remote_url(remotes[0])
+        return parse_remote_url(url)
+    # otherwise we have to error out
+    elif len(remotes) == 0:
+        raise Exception("Repo has no remotes.")
+    else: # len(remotes) > 1
+        raise Exception("Repo has multiple remotes but no upstream to indicate the correct one.")
+
+
+def get_relative_path(repo: GitRepo, path: str) -> str:
+    if os.path.samefile(path, repo.root_path):
+        return ""
+    return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
+
+
+def get_ref(repo: GitRepo, branch_mode: bool) -> Ref:
+    if branch_mode:
+        local_branch_name = repo.get_current_branch_name()
+        if local_branch_name == None:
+            raise Exception("Cannot build a branch-based URL with no branch checked out")
+        branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
+        return Ref(RefType.Branch, branch_name)
+    
+    hash = repo.get_short_hash()
+    # I don't know how we can get here without being able to get a hash, so suppress the error
+    return Ref(RefType.CommitHash, hash) # type: ignore
