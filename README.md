@@ -1,6 +1,10 @@
 # Git URL Generator
 
-Generates a website URL for a file or folder that's part of a repo hosted on GitHub, BitBucket or GitLab.
+Generates a website URL for a path that's part of a repo hosted on a GitHub, BitBucket or GitLab git forge.
+
+Supports github.com, bitbucket.org & gitlab.com by default.
+
+Can be easily confgured to support your company's self-hosted instance.
 
 ## Usage
 
@@ -37,7 +41,7 @@ giturl [-l line_number] [-b] <path>
 
 * Python 3
 
-## End User Installation
+## Installation
 
 (From the root of a local clone of this repo)
 ```
@@ -51,20 +55,42 @@ The directory where `pip` installs modules may need to be added to your PATH env
 pip uninstall giturl
 ```
 
+## Configuration
+
+The tool can be configured to support self hosted instances of one of the supported git forges.
+
+The expected location of the configuration file depends on which OS you're using:
+
+* **Linux**: `${XDG_CONFIG_HOME:-~/.config}/giturl/config.toml`
+* **MacOS**: `$HOME/Library/Application Support/giturl/config.toml`
+* **Windows**: `%LOCALAPPDATA%\giturl\giturl\config.toml`
+
+Cnofigure your self-hosted git forge instance as follows:
+
+```toml
+[forges]
+# "hostname" = "GitHub|GitLab|BitBucket"
+"github.acme.corp" = "GitHub"
+"gitlab.acme.corp" = "GitLab"
+```
+
 ## Development Setup
 
 * Setup Python virtual environment:
   ```sh
   python -m venv .venv
   ```
+
 * Activate virtual environment:
   ```
   source .venv/bin/activate
   ```
-  Or on Windows:  
+  Or on Windows:
+
   * Git Bash: `source .venv/Scripts/activate`  
   * Command Prompt: `.venv\Scripts\activate.bat`  
   * Powershell: `.\.venv\Scripts\Activate.ps1`
+
 * Install module into venv:
   ```
   pip install -e ".[dev]"
@@ -78,8 +104,6 @@ pytest -v
 
 ## Potential Enhancements
 
-* Extract the config into a config file.
 * Install using pipx.
 * Add option to open the URL in the user's browser.
-* If no path is supplied, produce the URL of the repository root.
 * Replace `-l` option with `path[:line_number]`.
