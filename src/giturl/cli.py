@@ -6,7 +6,7 @@ from giturl.config import get_forge_config
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate a GitHub URL for a file or directory in a git repository.")
+    parser = argparse.ArgumentParser(description="Generates a website URL for a path that's part of a repo hosted on a GitHub, BitBucket or GitLab git forge.")
     parser.add_argument("-l", "--line", dest="line_number", type=int, help="Line number to include in the URL", metavar="line_number")
     parser.add_argument("-b", "--branch", dest="branch_mode", action="store_true", help="Use branch name instead of commit SHA in the URL")
     parser.add_argument("path", type=pathlib.Path, help="Path to a file or directory in the git repository")
