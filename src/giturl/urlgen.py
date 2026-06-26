@@ -6,7 +6,7 @@ from giturl.types import ForgeType, Ref, RefType
 from giturl.weburl import get_url_generator_type
 
 
-def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None = None, branch_mode: bool = False) -> str:
+def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None, ref_type: RefType) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
         raise Exception("Path is not an existing file or directory.")
 
@@ -21,7 +21,7 @@ def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int 
         raise Exception(f"Path {path} is not in the git index.")
 
     relative_path = get_relative_path(repo, path)
-    ref = get_ref(repo, branch_mode)
+    ref = get_ref(repo, ref_type)
 
     remote_url = get_remote_url(repo)
     forge_type = forge_config.get(remote_url.host)
@@ -60,14 +60,15 @@ def get_relative_path(repo: GitRepo, path: str) -> str:
     return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
 
 
-def get_ref(repo: GitRepo, branch_mode: bool) -> Ref:
-    if branch_mode:
-        local_branch_name = repo.get_current_branch_name()
-        if local_branch_name == None:
-            raise Exception("Cannot build a branch-based URL with no branch checked out")
-        branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
-        return Ref(RefType.Branch, branch_name)
-    
-    hash = repo.get_short_hash()
-    # I don't know how we can get here without being able to get a hash, so suppress the error
-    return Ref(RefType.CommitHash, hash) # type: ignore
+def get_ref(repo: GitRepo, ref_type: RefType) -> Ref:
+    match ref_type:
+        case RefType.Branch:
+            local_branch_name = repo.get_current_branch_name()
+            if local_branch_name == None:
+                raise Exception("Cannot build a branch-based URL with no branch checked out")
+            branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
+            return Ref(RefType.Branch, branch_name)
+        case RefType.ShortHash:
+            hash = repo.get_short_hash()
+            # I don't know how we can get here without being able to get a hash, so suppress the error
+            return Ref(RefType.ShortHash, hash) # type: ignore

@@ -14,8 +14,8 @@ giturl [-l line_number] [-b] <path>
 
 ### Options
 
-- `-l line_number`: Specify a line number to include in the URL.
-- `-b`: Use the current branch name instead of the commit hash in the URL.
+* `-l <line_number>` - line number to include in the URL
+* `-r shorthash|branch` - Git ref type to use in the URL, defaults to `shorthash`
 
 ### Examples
 
@@ -33,7 +33,7 @@ giturl [-l line_number] [-b] <path>
 
 3. Generate the URL for a file using the current branch name instead of the current commit hash:
    ```sh
-   $ giturl -b tests/test-files/example.txt
+   $ giturl -r branch tests/test-files/example.txt
    https://github.com/gilessmart/giturl/blob/main/test-files/example.txt
    ```
 

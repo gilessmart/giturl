@@ -30,8 +30,8 @@ def test__cli__github(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://github.com/my-account/my-repo/blob/{hash}/subdir/info.txt#L7"
 
-    # branch mode
-    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    # ref type = branch
+    proc = giturl("-r", "branch", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == "https://github.com/my-account/my-repo/blob/main/subdir/info.txt"
 
@@ -57,8 +57,8 @@ def test__cli__bitbucket(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://bitbucket.org/my-account/my-repo/src/{hash}/subdir/info.txt#lines-5"
 
-    # branch mode
-    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    # ref type = branch
+    proc = giturl("-r", "branch", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == "https://bitbucket.org/my-account/my-repo/src/main/subdir/info.txt"
 
@@ -86,8 +86,8 @@ def test__cli__gitlab(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/my-project/-/blob/{hash}/subdir/info.txt#L10"
 
-    # branch mode
-    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    # ref type = branch
+    proc = giturl("-r", "branch", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == "https://gitlab.com/my-org/my-project/-/blob/main/subdir/info.txt?ref_type=heads"
 
@@ -114,7 +114,7 @@ def test__cli__gitlab_subproject(tmp_path):
     assert proc.returncode == 0
     assert proc.stdout.strip() == f"https://gitlab.com/my-org/project/sub-project/-/blob/{hash}/subdir/info.txt#L10"
 
-    # branch mode
-    proc = giturl("-b", tmp_path / "subdir/info.txt")
+    # ref type = branch
+    proc = giturl("-r", "branch", tmp_path / "subdir/info.txt")
     assert proc.returncode == 0
     assert proc.stdout.strip() == "https://gitlab.com/my-org/project/sub-project/-/blob/main/subdir/info.txt?ref_type=heads"
