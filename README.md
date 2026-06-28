@@ -44,15 +44,15 @@ giturl [-l line_number] [-b] <path>
 ## Installation
 
 (From the root of a local clone of this repo)
+
+**Install with pip**
 ```
 pip install --user .
 ```
-The directory where `pip` installs modules may need to be added to your PATH environment variable - (`pip` will report if this is the case).
 
-**Uninstall**
-
+**Install with pipx**
 ```
-pip uninstall giturl
+pipx install .
 ```
 
 ## Configuration
@@ -104,6 +104,5 @@ pytest -v
 
 ## Potential Enhancements
 
-* Install using pipx.
 * Add option to open the URL in the user's browser.
 * Replace `-l` option with `path[:line_number]`.
