@@ -2,7 +2,7 @@ import tomllib
 
 from platformdirs import user_config_path
 
-from giturl.weburl import ForgeType
+from giturl.weburlgen import ForgeType
 
 
 default_forges: dict[str, ForgeType] = {

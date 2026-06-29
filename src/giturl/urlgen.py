@@ -3,7 +3,7 @@ import os
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
 from giturl.types import ForgeType, Ref, RefType
-from giturl.weburl import get_url_generator_type
+from giturl.weburlgen import create_url_generator
 
 
 def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None, ref_type: RefType) -> str:
@@ -28,8 +28,7 @@ def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int 
     if forge_type is None:
         raise Exception("No config matched remote URL")
     
-    url_gen_type = get_url_generator_type(forge_type)
-    url_generator = url_gen_type.create(remote_url, repo)
+    url_generator = create_url_generator(forge_type, repo, remote_url)
     return url_generator.generate_url(relative_path, line_number, ref)
 
 

@@ -7,18 +7,19 @@ from giturl.remoteurl import RemoteUrl
 from giturl.types import ForgeType, Ref, RefType
 
 
-def get_url_generator_type(forge_type: ForgeType) -> UrlGenerator:
-    return {
+def create_url_generator(forge_type: ForgeType, repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
+    type = {
         ForgeType.GitHub: GitHubUrlGenerator,
         ForgeType.BitBucket: BitBucketUrlGenerator,
         ForgeType.GitLab: GitLabUrlGenerator
     }[forge_type]
+    return type.create(repo, remote_url)
 
 
 class UrlGenerator(ABC):
     @staticmethod
     @abstractmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
+    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         pass
 
     @abstractmethod
@@ -28,7 +29,7 @@ class UrlGenerator(ABC):
 
 class GitHubUrlGenerator(UrlGenerator):
     @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
+    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
             raise Exception(f"Invalid GitHub remote URL path '{remote_url.path}'")
@@ -51,7 +52,7 @@ class GitHubUrlGenerator(UrlGenerator):
 
 class BitBucketUrlGenerator(UrlGenerator):
     @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
+    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
             raise Exception(f"Invalid BitBucket remote URL path '{remote_url.path}'")
@@ -72,7 +73,7 @@ class BitBucketUrlGenerator(UrlGenerator):
 
 class GitLabUrlGenerator(UrlGenerator):
     @staticmethod
-    def create(remote_url: RemoteUrl, repo: GitRepo) -> UrlGenerator:
+    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<org_name>.+?)/(?P<repo_path>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
             raise Exception(f"Invalid GitLab remote URL path '{remote_url.path}'")
