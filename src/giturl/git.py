@@ -66,3 +66,7 @@ class GitRepo:
         result = subprocess.run(["git", "rev-parse", "--short", "HEAD"], text=True, capture_output=True, cwd=self.root_path)
         # Return None if the command fails, e.g. if there are no commits in the repository
         return result.stdout.strip() if result.returncode == 0 else None
+
+    def is_dir(self, relative_path: str) -> bool:
+        full_path = os.path.join(self.root_path, relative_path)
+        return os.path.isdir(full_path)

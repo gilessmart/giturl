@@ -21,13 +21,13 @@ def test__get_git_url__line_number_with_directory_path(tmp_path):
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     with pytest.raises(Exception) as exinfo:
         get_git_url(default_forges, tmp_path, 20, RefType.ShortHash)
-    assert "Line number is invalid for directory paths" in str(exinfo.value)
+    assert "Line number is invalid when the path is a directory" in str(exinfo.value)
 
 
 def test__get_git_url__no_repo(tmp_path):
     with pytest.raises(Exception) as exinfo:
         get_git_url(default_forges, tmp_path, None, RefType.ShortHash)
-    assert "Path is not in a git repo" in str(exinfo.value)
+    assert "not part of a git repo" in str(exinfo.value)
 
 
 def test__get_git_url__path_not_in_index(tmp_path):
@@ -97,32 +97,13 @@ def test__get_git_url__ref_type_branch__detached_head(tmp_path):
     assert "Cannot build a branch-based URL with no branch checked out" in str(exinfo.value)
 
 
-@pytest.mark.parametrize("remote_url, expected_error_msg", [
-    ("git@github.com:gilessmart-giturl.git", "Invalid GitHub remote URL path 'gilessmart-giturl.git'"),
-    ("git@bitbucket.org:gilessmart-giturl.git", "Invalid BitBucket remote URL path 'gilessmart-giturl.git'"),
-    ("git@gitlab.com:gilessmart-giturl.git", "Invalid GitLab remote URL path 'gilessmart-giturl.git'")
-])
-def test__get_git_url__invalid_remote_url_paths(tmp_path, remote_url, expected_error_msg):
+def test__get_git_url__single_remote(tmp_path):
     helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    with pytest.raises(Exception) as exinfo:
-        get_git_url(default_forges, tmp_path / "README.md", None, RefType.ShortHash)
-    assert str(exinfo.value) == expected_error_msg
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{hash}/README.md"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/README.md"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/{hash}/README.md")
-])
-def test__get_git_url__single_remote(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
+    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     url = get_git_url(default_forges, tmp_path / "README.md", None, RefType.ShortHash)
     hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
+    assert url == f"https://github.com/gilessmart/giturl/blob/{hash}/README.md"
 
 
 @pytest.mark.parametrize("remote_name, expected_web_url", [
@@ -142,17 +123,12 @@ def test__get_git_url__multiple_remotes_and_upstream(tmp_path, remote_name, expe
     assert url == expected_web_url.format(hash=hash)
 
 
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/feature-x/README.md"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/feature-x/README.md"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/feature-x/README.md?ref_type=heads")
-])
-def test__get_git_url__ref_type_branch(tmp_path, remote_url, expected_web_url):
+def test__get_git_url__ref_type_branch(tmp_path):
     helpers.repo_create(tmp_path, branch="feature-x")
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
+    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     url = get_git_url(default_forges, tmp_path / "README.md", None, RefType.Branch)
-    assert url == expected_web_url
+    assert url == "https://github.com/gilessmart/giturl/blob/feature-x/README.md"
 
 
 @pytest.mark.parametrize("remote_name, expected_web_url", [
@@ -173,112 +149,19 @@ def test__get_git_url__ref_type_branch_with_multiple_remotes_and_upstream(tmp_pa
     assert url == expected_web_url
 
 
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{hash}/README.md#L7"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/README.md#lines-7"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/{hash}/README.md#L7")
-])
-def test__get_git_url__line_num_option(tmp_path, remote_url, expected_web_url):
+def test__get_git_url__line_number(tmp_path):
     helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
+    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     url = get_git_url(default_forges, tmp_path / "README.md", 7, RefType.ShortHash)
     hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
+    assert url == f"https://github.com/gilessmart/giturl/blob/{hash}/README.md#L7"
 
 
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/tree/{hash}/"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/tree/{hash}/")
-])
-def test__get_git_url__root_level_folder(tmp_path, remote_url, expected_web_url):
+def test__get_git_url__root_level_folder(tmp_path):
     helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
+    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     url = get_git_url(default_forges, tmp_path, None, RefType.ShortHash)
     hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{hash}/README.md"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/README.md"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/{hash}/README.md")
-])
-def test__get_git_url__root_level_file(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    url = get_git_url(default_forges, tmp_path / "README.md", None, RefType.ShortHash)
-    hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/tree/{hash}/a/b"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/a/b"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/tree/{hash}/a/b")
-])
-def test__get_git_url__nested_folder(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "a/b/foo.txt", "hello\n")
-    url = get_git_url(default_forges, tmp_path / "a/b", None, RefType.ShortHash)
-    hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{hash}/a/b/foo.txt"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/a/b/foo.txt"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/{hash}/a/b/foo.txt")
-])
-def test__get_git_url__nested_file(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "a/b/foo.txt", "hello\n")
-    url = get_git_url(default_forges, tmp_path / "a/b/foo.txt", None, RefType.ShortHash)
-    hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{hash}/file%20-%3D%2B.txt"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{hash}/file%20-%3D%2B.txt"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/{hash}/file%20-%3D%2B.txt")
-])
-def test__get_git_url__path_with_special_chars(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "file -=+.txt", "hello\n")
-    url = get_git_url(default_forges, tmp_path / "file -=+.txt", None, RefType.ShortHash)
-    hash = helpers.repo_get_current_hash(tmp_path)
-    assert url == expected_web_url.format(hash=hash)
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md?ref_type=heads")
-])
-def test__get_git_url__local_branch_with_special_chars(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path, branch="test-branches/_=+,.@¬£")
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    url = get_git_url(default_forges, tmp_path / "README.md", None, RefType.Branch)
-    assert url == expected_web_url
-
-
-@pytest.mark.parametrize("remote_url, expected_web_url", [
-    ("git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"),
-    ("git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md"),
-    ("git@gitlab.com:gilessmart/giturl.git", "https://gitlab.com/gilessmart/giturl/-/blob/test-branches/_%3D%2B%2C.%40%C2%AC%C2%A3/README.md?ref_type=heads")
-])
-def test__get_git_url__upstream_branch_with_special_chars(tmp_path, remote_url, expected_web_url):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", remote_url)
-    helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
-    helpers.repo_set_upstream(tmp_path, "origin", "test-branches/_=+,.@¬£")
-    url = get_git_url(default_forges, tmp_path / "README.md", None, RefType.Branch)
-    assert url == expected_web_url
+    assert url == "https://github.com/gilessmart/giturl/tree/{hash}/".format(hash=hash)

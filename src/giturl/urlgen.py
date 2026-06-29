@@ -11,11 +11,11 @@ def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int 
         raise Exception("Path is not an existing file or directory.")
 
     if line_number is not None and os.path.isdir(path):
-        raise Exception("Line number is invalid for directory paths.")
+        raise Exception("Line number is invalid when the path is a directory.")
     
     repo = GitRepo.from_path(path)
     if repo is None:
-        raise Exception("Path is not in a git repo.")
+        raise Exception("Path is not part of a git repo.")
         
     if not repo.in_tree(path):
         raise Exception(f"Path {path} is not in the git index.")
