@@ -20,6 +20,21 @@ def test__weburlgen__create_url_generator__invalid_remote_url_path(forge_type, r
     assert str(exinfo.value) == expected_err_msg
 
 
+@pytest.mark.parametrize("remote_url, relative_path, expected_url", [
+    ("git@gitlab.com:gitlab-org/ai/skills.git", ".gitlab-ci.yml", "https://gitlab.com/gitlab-org/ai/skills/-/blob/{ref}/.gitlab-ci.yml"),
+    ("git@gitlab.com:gitlab-org/design-strategy/ux-artifacts/motion-service-journey-map.git", ".gitlab-ci.yml", "https://gitlab.com/gitlab-org/design-strategy/ux-artifacts/motion-service-journey-map/-/blob/{ref}/.gitlab-ci.yml")
+])
+def test__weburlgen__create_url_generator__gitlab_subprojects__file_path(remote_url, relative_path, expected_url):
+    repo = GitRepo("")
+    repo.is_dir = lambda relative_path: False
+    remote_url = parse_remote_url(remote_url)
+    generator = create_url_generator(ForgeType.GitLab, repo, remote_url)
+    
+    ref = Ref(RefType.ShortHash, "abcdef0")
+    url = generator.generate_url(relative_path, None, ref)
+    assert url == expected_url.format(ref=ref.value)
+
+
 @pytest.mark.parametrize("forge_type, remote_url, expected_url", [
     (ForgeType.GitHub, "git@github.com:gilessmart/giturl.git", "https://github.com/gilessmart/giturl/blob/{ref}/README.md"),
     (ForgeType.BitBucket, "git@bitbucket.org:gilessmart/giturl.git", "https://bitbucket.org/gilessmart/giturl/src/{ref}/README.md"),
