@@ -2,8 +2,7 @@ from abc import ABC, abstractmethod
 from urllib.parse import quote
 import re
 
-from giturl.git import GitRepo
-from giturl.remoteurl import RemoteUrl
+from giturl.git import GitRepo, RemoteUrl
 from giturl.types import ForgeType, Ref, RefType, UsageError
 
 

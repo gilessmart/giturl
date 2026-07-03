@@ -2,8 +2,7 @@ from typing import Protocol
 
 import pytest
 
-from giturl.git import GitRepo
-from giturl.remoteurl import RemoteUrl
+from giturl.git import GitRepo, RemoteUrl
 from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 

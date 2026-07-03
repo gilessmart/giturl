@@ -1,4 +1,4 @@
-from giturl.remoteurl import RemoteUrl
+from giturl.git import RemoteUrl
 
 
 def test__RemoteUrl__parse__github_ssh():
