@@ -19,12 +19,10 @@ def create_url_generator(forge_type: ForgeType, repo: GitRepo, remote_url: Remot
 class UrlGenerator(ABC):
     @staticmethod
     @abstractmethod
-    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
-        pass
+    def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator: ...
 
     @abstractmethod
-    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str:
-        pass
+    def generate_url(self, relative_path: str, line_number: int | None, ref: Ref) -> str: ...
 
 
 class GitHubUrlGenerator(UrlGenerator):
