@@ -1,10 +1,11 @@
 import os
+import pathlib
 import subprocess
 
 
 class GitRepo:
     @staticmethod
-    def from_path(path: str) -> GitRepo | None:
+    def from_path(path: pathlib.Path) -> GitRepo | None:
         abs_path = os.path.abspath(path)
         dir_path = path if os.path.isdir(abs_path) else os.path.dirname(abs_path)
         result = subprocess.run(
@@ -23,7 +24,7 @@ class GitRepo:
     def __init__(self, root_path: str) -> None:
         self.root_path = root_path
 
-    def in_tree(self, path: str) -> bool:
+    def in_tree(self, path: pathlib.Path) -> bool:
         result = subprocess.run(
             ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", os.path.abspath(path)], 
             text=True,

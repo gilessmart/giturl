@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
@@ -6,7 +7,7 @@ from giturl.types import ForgeType, Ref, RefType
 from giturl.weburlgen import create_url_generator
 
 
-def get_git_url(forge_config: dict[str, ForgeType], path: str, line_number: int | None, ref_type: RefType) -> str:
+def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_number: int | None, ref_type: RefType) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
         raise Exception("Path is not an existing file or directory.")
 
@@ -53,7 +54,7 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         raise Exception("Repo has multiple remotes but no upstream to indicate the correct one.")
 
 
-def get_relative_path(repo: GitRepo, path: str) -> str:
+def get_relative_path(repo: GitRepo, path: pathlib.Path) -> str:
     if os.path.samefile(path, repo.root_path):
         return ""
     return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
