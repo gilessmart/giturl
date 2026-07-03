@@ -2,7 +2,7 @@ import os
 import pathlib
 
 from giturl.git import GitRepo
-from giturl.remoteurl import RemoteUrl, parse_remote_url
+from giturl.remoteurl import RemoteUrl
 from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 
@@ -41,7 +41,7 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         if remote is not None:
             url = repo.get_remote_url(remote)
             try:
-                return parse_remote_url(url)
+                return RemoteUrl.parse(url)
             except ValueError as e:
                 raise UsageError(f"remote URL {url} is unsupported") from e
     
@@ -50,7 +50,7 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
     if len(remotes) == 1:
         url = repo.get_remote_url(remotes[0])
         try:
-            return parse_remote_url(url)
+            return RemoteUrl.parse(url)
         except ValueError as e:
             raise UsageError(f"remote URL {url} is unsupported") from e
     # otherwise we have to error out

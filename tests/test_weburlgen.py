@@ -3,7 +3,7 @@ from typing import Protocol
 import pytest
 
 from giturl.git import GitRepo
-from giturl.remoteurl import parse_remote_url
+from giturl.remoteurl import RemoteUrl
 from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 
@@ -26,7 +26,7 @@ def create_mock_repo(*, is_dir: IsDirFn | None = None) -> GitRepo:
 ])
 def test__weburlgen__create_url_generator__invalid_remote_url_path(forge_type, remote_url, expected_err_msg):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     with pytest.raises(UsageError) as exinfo:
         create_url_generator(forge_type, repo, remote_url)
     assert str(exinfo.value) == expected_err_msg
@@ -38,7 +38,7 @@ def test__weburlgen__create_url_generator__invalid_remote_url_path(forge_type, r
 ])
 def test__weburlgen__create_url_generator__gitlab_subprojects__file_path(remote_url, relative_path, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(ForgeType.GitLab, repo, remote_url)
     
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -53,7 +53,7 @@ def test__weburlgen__create_url_generator__gitlab_subprojects__file_path(remote_
 ])
 def test__weburlgen__generate_url__ref_type__short_hash(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -68,7 +68,7 @@ def test__weburlgen__generate_url__ref_type__short_hash(forge_type, remote_url, 
 ])
 def test__weburlgen__generate_url__ref_type__branch(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.Branch, "feature-x")
@@ -83,7 +83,7 @@ def test__weburlgen__generate_url__ref_type__branch(forge_type, remote_url, expe
 ])
 def test__weburlgen__generate_url__line_number(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -98,7 +98,7 @@ def test__weburlgen__generate_url__line_number(forge_type, remote_url, expected_
 ])
 def test__weburlgen__generate_url__root_folder(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: True)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -113,7 +113,7 @@ def test__weburlgen__generate_url__root_folder(forge_type, remote_url, expected_
 ])
 def test__weburlgen__generate_url__root_level_file(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -128,7 +128,7 @@ def test__weburlgen__generate_url__root_level_file(forge_type, remote_url, expec
 ])
 def test__weburlgen__generate_url__nested_folder(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: True)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -143,7 +143,7 @@ def test__weburlgen__generate_url__nested_folder(forge_type, remote_url, expecte
 ])
 def test__weburlgen__generate_url__nested_file(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -158,7 +158,7 @@ def test__weburlgen__generate_url__nested_file(forge_type, remote_url, expected_
 ])
 def test__weburlgen__generate_url__path_with_special_chars(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.ShortHash, "abcdef0")
@@ -173,7 +173,7 @@ def test__weburlgen__generate_url__path_with_special_chars(forge_type, remote_ur
 ])
 def test__weburlgen__generate_url__branch_with_special_chars(forge_type, remote_url, expected_url):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
-    remote_url = parse_remote_url(remote_url)
+    remote_url = RemoteUrl.parse(remote_url)
     generator = create_url_generator(forge_type, repo, remote_url)
 
     ref = Ref(RefType.Branch, "test-branches/_=+,.@¬£")
