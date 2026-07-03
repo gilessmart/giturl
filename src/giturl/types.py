@@ -2,6 +2,12 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
+class ConfigError(Exception): ...
+
+
+class UsageError(Exception): ...
+
+
 class ForgeType(Enum):
     GitHub = auto()
     BitBucket = auto()

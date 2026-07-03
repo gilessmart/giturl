@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-from giturl.types import RefType
+from giturl.types import ConfigError, RefType, UsageError
 from giturl.urlgen import get_git_url
 from giturl.config import get_forge_config
 
@@ -16,6 +16,10 @@ def main():
     try:
         forge_config = get_forge_config()
         url = get_git_url(forge_config, args.path, args.line_number, args.ref_type)
-        print(url)
-    except Exception as e:
+    except ConfigError as e:
+        print(f"Config error - {e}")
+        exit(1)
+    except UsageError as e:
         parser.error(str(e))
+
+    print(url)

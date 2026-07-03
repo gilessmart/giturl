@@ -3,23 +3,23 @@ import pathlib
 
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl, parse_remote_url
-from giturl.types import ForgeType, Ref, RefType
+from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 
 
 def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_number: int | None, ref_type: RefType) -> str:
     if not os.path.isfile(path) and not os.path.isdir(path):
-        raise Exception("Path is not an existing file or directory.")
+        raise UsageError("path is not an existing file or directory")
 
     if line_number is not None and os.path.isdir(path):
-        raise Exception("Line number is invalid when the path is a directory.")
+        raise UsageError("line number is invalid when the path is a directory")
     
     repo = GitRepo.from_path(path)
     if repo is None:
-        raise Exception("Path is not part of a git repo.")
+        raise UsageError("path is not part of a git repo")
         
     if not repo.in_tree(path):
-        raise Exception(f"Path {path} is not in the git index.")
+        raise UsageError(f"path {path} is not in the git index")
 
     relative_path = get_relative_path(repo, path)
     ref = get_ref(repo, ref_type)
@@ -27,7 +27,7 @@ def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_num
     remote_url = get_remote_url(repo)
     forge_type = forge_config.get(remote_url.host)
     if forge_type is None:
-        raise Exception("No config matched remote URL")
+        raise UsageError(f"remote URL host {remote_url.host} is not configured")
     
     url_generator = create_url_generator(forge_type, repo, remote_url)
     return url_generator.generate_url(relative_path, line_number, ref)
@@ -49,9 +49,9 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         return parse_remote_url(url)
     # otherwise we have to error out
     elif len(remotes) == 0:
-        raise Exception("Repo has no remotes.")
+        raise UsageError("cannot generate URL for repo with no remotes")
     else: # len(remotes) > 1
-        raise Exception("Repo has multiple remotes but no upstream to indicate the correct one.")
+        raise UsageError("cannot generate URL for repo with multiple remotes but no upstream")
 
 
 def get_relative_path(repo: GitRepo, path: pathlib.Path) -> str:
@@ -65,7 +65,7 @@ def get_ref(repo: GitRepo, ref_type: RefType) -> Ref:
         case RefType.Branch:
             local_branch_name = repo.get_current_branch_name()
             if local_branch_name == None:
-                raise Exception("Cannot build a branch-based URL with no branch checked out")
+                raise UsageError("cannot build a branch-based URL with no branch checked out")
             branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
             return Ref(RefType.Branch, branch_name)
         case RefType.ShortHash:

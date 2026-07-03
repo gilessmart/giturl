@@ -4,7 +4,7 @@ import pytest
 
 from giturl.git import GitRepo
 from giturl.remoteurl import parse_remote_url
-from giturl.types import ForgeType, Ref, RefType
+from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 
 
@@ -20,14 +20,14 @@ def create_mock_repo(*, is_dir: IsDirFn | None = None) -> GitRepo:
 
 
 @pytest.mark.parametrize("forge_type, remote_url, expected_err_msg", [
-    (ForgeType.GitHub, "git@github.com:gilessmart-giturl.git", "Invalid GitHub remote URL path 'gilessmart-giturl.git'"),
-    (ForgeType.BitBucket, "git@bitbucket.org:gilessmart-giturl.git", "Invalid BitBucket remote URL path 'gilessmart-giturl.git'"),
-    (ForgeType.GitLab, "git@gitlab.com:gilessmart-giturl.git", "Invalid GitLab remote URL path 'gilessmart-giturl.git'")
+    (ForgeType.GitHub, "git@github.com:gilessmart-giturl.git", "invalid GitHub remote URL path 'gilessmart-giturl.git'"),
+    (ForgeType.BitBucket, "git@bitbucket.org:gilessmart-giturl.git", "invalid BitBucket remote URL path 'gilessmart-giturl.git'"),
+    (ForgeType.GitLab, "git@gitlab.com:gilessmart-giturl.git", "invalid GitLab remote URL path 'gilessmart-giturl.git'")
 ])
 def test__weburlgen__create_url_generator__invalid_remote_url_path(forge_type, remote_url, expected_err_msg):
     repo = create_mock_repo(is_dir = lambda relative_path: False)
     remote_url = parse_remote_url(remote_url)
-    with pytest.raises(Exception) as exinfo:
+    with pytest.raises(UsageError) as exinfo:
         create_url_generator(forge_type, repo, remote_url)
     assert str(exinfo.value) == expected_err_msg
 

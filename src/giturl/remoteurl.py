@@ -14,7 +14,6 @@ patterns = [
     r"https://(.+@)?(?P<host>[\w\.]*\w+)(?P<path>.+)"
 ]
 
-
 # The parsing here doesn't get anywhere near supporting all the valid git remote URLs,
 # and it has no support for URL decoding, but hopefully it can manage the github.com, 
 # bitbucket.org and gitlab.com URLs that it's intended for.
@@ -24,4 +23,4 @@ def parse_remote_url(s: str) -> RemoteUrl:
         if match is not None:
             return RemoteUrl(s, match["host"], match["path"].removeprefix("/"))
     
-    raise Exception(f"Remote URL {s} is unsupported")
+    raise Exception(f"remote URL {s} is unsupported")

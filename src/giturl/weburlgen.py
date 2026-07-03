@@ -4,7 +4,7 @@ import re
 
 from giturl.git import GitRepo
 from giturl.remoteurl import RemoteUrl
-from giturl.types import ForgeType, Ref, RefType
+from giturl.types import ForgeType, Ref, RefType, UsageError
 
 
 def create_url_generator(forge_type: ForgeType, repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
@@ -30,7 +30,7 @@ class GitHubUrlGenerator(UrlGenerator):
     def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise Exception(f"Invalid GitHub remote URL path '{remote_url.path}'")
+            raise UsageError(f"invalid GitHub remote URL path '{remote_url.path}'")
         return GitHubUrlGenerator(repo, remote_url, match["account_name"], match["repo_name"])
 
     def __init__(self, repo: GitRepo, remote_url: RemoteUrl, account_name: str, repo_name: str):
@@ -53,7 +53,7 @@ class BitBucketUrlGenerator(UrlGenerator):
     def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<account_name>.+?)/(?P<repo_name>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise Exception(f"Invalid BitBucket remote URL path '{remote_url.path}'")
+            raise UsageError(f"invalid BitBucket remote URL path '{remote_url.path}'")
         return BitBucketUrlGenerator(repo, remote_url, match["account_name"], match["repo_name"])
     
     def __init__(self, repo: GitRepo, remote_url: RemoteUrl, account_name: str, repo_name: str):
@@ -74,7 +74,7 @@ class GitLabUrlGenerator(UrlGenerator):
     def create(repo: GitRepo, remote_url: RemoteUrl) -> UrlGenerator:
         match = re.search(r"(?P<org_name>.+?)/(?P<repo_path>.+).git", remote_url.path, re.IGNORECASE)
         if match is None:
-            raise Exception(f"Invalid GitLab remote URL path '{remote_url.path}'")
+            raise UsageError(f"invalid GitLab remote URL path '{remote_url.path}'")
         return GitLabUrlGenerator(repo, remote_url, match["org_name"], match["repo_path"])
     
     def __init__(self, repo: GitRepo, remote_url: RemoteUrl, org_name: str, repo_path: str):

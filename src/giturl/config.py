@@ -2,7 +2,7 @@ import tomllib
 
 from platformdirs import user_config_path
 
-from giturl.weburlgen import ForgeType
+from giturl.types import ConfigError, ForgeType
 
 
 default_forges: dict[str, ForgeType] = {
@@ -10,6 +10,7 @@ default_forges: dict[str, ForgeType] = {
     "bitbucket.org": ForgeType.BitBucket,
     "gitlab.com": ForgeType.GitLab
 }
+
 
 def get_forge_config() -> dict[str, ForgeType]:
     config_file_path = user_config_path("giturl", roaming=True, appauthor=False) / "config.toml"
@@ -20,19 +21,19 @@ def get_forge_config() -> dict[str, ForgeType]:
         with config_file_path.open("rb") as f:
             raw_config = tomllib.load(f)
     except tomllib.TOMLDecodeError:
-        raise Exception("Config file was not valid TOML")
+        raise ConfigError("config file was not valid TOML")
     except OSError:
-        raise Exception("Could not read config file")
+        raise ConfigError("could not read config file")
     
     raw_forges = raw_config.get("forges", {})
     if not isinstance(raw_forges, dict):
-        raise Exception("Invalid config - 'forges' was not a table")
+        raise ConfigError("invalid config - 'forges' was not a table")
     
     forges = {}
     for key, val in raw_forges.items():
         valid_forge_names = [t.name for t in ForgeType]
         if not isinstance(val, str) or not val in valid_forge_names:
-            raise Exception(f"Invalid forge type for host '{key}' in config - expected one of {valid_forge_names}, found '{val}'")
+            raise ConfigError(f"invalid forge type for host '{key}' in config - expected one of {valid_forge_names}, found '{val}'")
         forges[key] = ForgeType[val]
     
     return default_forges | forges
