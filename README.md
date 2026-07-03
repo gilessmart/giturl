@@ -39,6 +39,7 @@ giturl [-l line_number] [-b] <path>
 
 ## Requirements
 
+* Git
 * Python 3
 
 ## Installation
@@ -73,6 +74,12 @@ Configure your self-hosted git forge instances as follows:
 "github.acme.corp" = "GitHub"
 "gitlab.acme.corp" = "GitLab"
 ```
+
+## Limitations
+
+* Only the most commonly used git remote URL formats are supported:
+  * `git@<hostname>:<path>.git`
+  * `https://[<user>@]<hostname>/<path>.git`
 
 ## Development Setup
 
