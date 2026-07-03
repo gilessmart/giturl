@@ -23,4 +23,4 @@ def parse_remote_url(s: str) -> RemoteUrl:
         if match is not None:
             return RemoteUrl(s, match["host"], match["path"].removeprefix("/"))
     
-    raise Exception(f"remote URL {s} is unsupported")
+    raise ValueError(f"remote URL {s} did not match any supported pattern")

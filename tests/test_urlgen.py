@@ -71,7 +71,7 @@ def test__get_git_url__local_remote_url(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_commit_file(tmp_path, "README.md", "hello\n")
     helpers.repo_add_remote(tmp_path, "origin", "file:///Users/giles/repos/giturl")
-    with pytest.raises(Exception) as exinfo:
+    with pytest.raises(UsageError) as exinfo:
         get_git_url(default_forges, tmp_path, None, RefType.ShortHash)
     assert "remote URL file:///Users/giles/repos/giturl is unsupported" in str(exinfo.value)
 

@@ -40,13 +40,19 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         remote = repo.get_upstream_remote(local_branch_name)
         if remote is not None:
             url = repo.get_remote_url(remote)
-            return parse_remote_url(url)
+            try:
+                return parse_remote_url(url)
+            except ValueError as e:
+                raise UsageError(f"remote URL {url} is unsupported") from e
     
     # else if there's exactly 1 remote branch, we'll default to that
     remotes = repo.get_remotes()
     if len(remotes) == 1:
         url = repo.get_remote_url(remotes[0])
-        return parse_remote_url(url)
+        try:
+            return parse_remote_url(url)
+        except ValueError as e:
+            raise UsageError(f"remote URL {url} is unsupported") from e
     # otherwise we have to error out
     elif len(remotes) == 0:
         raise UsageError("cannot generate URL for repo with no remotes")
