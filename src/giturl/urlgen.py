@@ -35,6 +35,26 @@ def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_num
     return url_generator.generate_url(relative_path, line_number, ref)
 
 
+def get_relative_path(repo: GitRepo, path: pathlib.Path) -> str:
+    if os.path.samefile(path, repo.root_path):
+        return ""
+    return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
+
+
+def get_ref(repo: GitRepo, ref_type: RefType) -> Ref:
+    match ref_type:
+        case RefType.Branch:
+            local_branch_name = repo.get_current_branch_name()
+            if local_branch_name == None:
+                raise UsageError("cannot build a branch-based URL with no branch checked out")
+            branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
+            return Ref(RefType.Branch, branch_name)
+        case RefType.ShortHash:
+            hash = repo.get_short_hash()
+            # I don't know how we can get here without being able to get a hash, so suppress the error
+            return Ref(RefType.ShortHash, hash) # type: ignore
+
+
 def get_remote_url(repo: GitRepo) -> RemoteUrl:
     local_branch_name = repo.get_current_branch_name()
     # if there's a local branch checked out and it's tracking a remote branch, we'll use that remote branch
@@ -60,23 +80,3 @@ def get_remote_url(repo: GitRepo) -> RemoteUrl:
         raise UsageError("cannot generate URL for repo with no remotes")
     else: # len(remotes) > 1
         raise UsageError("cannot generate URL for repo with multiple remotes but no upstream")
-
-
-def get_relative_path(repo: GitRepo, path: pathlib.Path) -> str:
-    if os.path.samefile(path, repo.root_path):
-        return ""
-    return os.path.relpath(path, repo.root_path).replace(os.sep, "/")
-
-
-def get_ref(repo: GitRepo, ref_type: RefType) -> Ref:
-    match ref_type:
-        case RefType.Branch:
-            local_branch_name = repo.get_current_branch_name()
-            if local_branch_name == None:
-                raise UsageError("cannot build a branch-based URL with no branch checked out")
-            branch_name = repo.get_upstream_branch(local_branch_name) or local_branch_name
-            return Ref(RefType.Branch, branch_name)
-        case RefType.ShortHash:
-            hash = repo.get_short_hash()
-            # I don't know how we can get here without being able to get a hash, so suppress the error
-            return Ref(RefType.ShortHash, hash) # type: ignore

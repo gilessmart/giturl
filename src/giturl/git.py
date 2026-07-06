@@ -71,7 +71,7 @@ class GitRepo:
 
         Returns:
           True if the path is part of the git tree at HEAD.
-          False otherwise, including if the repo has no commits.
+          otherwise False, including if the repo has no commits.
         
         Raises:
           FileNotFoundError: The `git` executable was not found.
@@ -83,12 +83,13 @@ class GitRepo:
             encoding="utf-8",
             cwd=self.root_path)
         return result.stdout.count("\x00") > 0
-    
+
     def get_current_branch_name(self) -> str | None:
         """Get the current local branch name.
 
         Returns:
-          The name of the current local branch, or None if the repo is in detached head state.
+          The name of the current local branch,
+          or None if no branch is checked out i.e. the repo is in detached head state.
 
         Raises:
           FileNotFoundError: The `git` executable was not found.
@@ -100,6 +101,42 @@ class GitRepo:
             cwd=self.root_path).strip()
         # If the branch name is empty, return None which indicates we're in a detached HEAD state
         return branch if branch else None
+
+    def get_upstream_branch(self, local_branch: str) -> str | None:
+        """Get the upstream branch name.
+        
+        Returns:
+          The name of the upstream branch e.g. main,
+          or None if the repo doesn't have an upstream branch name in its config.
+          
+        Raises:
+          FileNotFoundError: The `git` executable was not found.
+        """
+        result = subprocess.run(
+            ["git", "config", "get", f"branch.{local_branch}.merge"],
+            text=True,
+            capture_output=True,
+            encoding="utf-8",
+            cwd=self.root_path)
+        return result.stdout.removeprefix("refs/heads/").strip() if result.returncode == 0 else None
+
+    def get_short_hash(self) -> str | None:
+        """Get the short hash of the revision at HEAD.
+
+        Returns:
+          The short hash e.g. abcdef0,
+          or None if there was no revision at HEAD e.g. if the repo has no commits.
+        
+        Raises:
+          FileNotFoundError: The `git` executable was not found.
+        """
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            text=True,
+            capture_output=True,
+            cwd=self.root_path)
+        # Return None if the command fails, e.g. if there are no commits in the repository
+        return result.stdout.strip() if result.returncode == 0 else None
 
     def get_upstream_remote(self, local_branch: str) -> str | None:
         """Get the upstream remote of the given local branch.
@@ -151,42 +188,6 @@ class GitRepo:
             cwd=self.root_path).splitlines()
         return [r.strip() for r in remotes if r]
 
-    def get_upstream_branch(self, local_branch: str) -> str | None:
-        """Get the upstream branch name.
-        
-        Returns:
-          The name of the upstream branch e.g. main,
-          or None if the repo doesn't have an upstream branch name in its config.
-          
-        Raises:
-          FileNotFoundError: The `git` executable was not found.
-        """
-        result = subprocess.run(
-            ["git", "config", "get", f"branch.{local_branch}.merge"],
-            text=True,
-            capture_output=True,
-            encoding="utf-8",
-            cwd=self.root_path)
-        return result.stdout.removeprefix("refs/heads/").strip() if result.returncode == 0 else None
-
-    def get_short_hash(self) -> str | None:
-        """Get the short hash of the revision at HEAD.
-
-        Returns:
-          The short hash e.g. abcdef0,
-          or None if there was no revision at HEAD e.g. if the repo has no commits.
-        
-        Raises:
-          FileNotFoundError: The `git` executable was not found.
-        """
-        result = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            text=True,
-            capture_output=True,
-            cwd=self.root_path)
-        # Return None if the command fails, e.g. if there are no commits in the repository
-        return result.stdout.strip() if result.returncode == 0 else None
-
     def is_dir(self, relative_path: str) -> bool:
         """Determine whether the given relative path is a directory path.
 
@@ -195,7 +196,8 @@ class GitRepo:
             a path relative to the repo root.
         
         Returns:
-          True if the given path points to a directory, otherwise False (including if the path doesn't exist).
+          True if the given path points to a directory,
+          otherwise False (including if the path doesn't exist).
         """
         full_path = os.path.join(self.root_path, relative_path)
         return os.path.isdir(full_path)
