@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from giturl.git import GitRepo, RemoteUrl
+from giturl.git import ensure_git, GitRepo, RemoteUrl
 from giturl.types import ForgeType, Ref, RefType, UsageError
 from giturl.weburlgen import create_url_generator
 
@@ -12,6 +12,9 @@ def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_num
 
     if line_number is not None and os.path.isdir(path):
         raise UsageError("line number is invalid when the path is a directory")
+    
+    if not ensure_git():
+        raise UsageError("git is required");
     
     repo = GitRepo.from_path(path)
     if repo is None:

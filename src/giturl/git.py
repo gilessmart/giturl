@@ -2,7 +2,12 @@ from dataclasses import dataclass
 import os
 import pathlib
 import re
+import shutil
 import subprocess
+
+
+def ensure_git():
+    return shutil.which("git") is not None
 
 
 @dataclass
