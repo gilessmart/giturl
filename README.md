@@ -111,5 +111,10 @@ pytest -v
 
 ## Potential Enhancements
 
-* Add option to open the URL in the user's browser.
-* Replace `-l` option with `path[:line_number]`.
+* Add option to open the URL in the user's browser
+* Replace `-l` option with `path[:line_number]`
+* Add a command to print the path to the config file / open the config in the default editor
+* Add support for full length SHA hashes
+* Add config option for default ref type
+* Add full support for git remote URLs
+* Ensure the ref exists on the remote
