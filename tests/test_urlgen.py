@@ -30,6 +30,15 @@ def test__get_git_url__no_repo(tmp_path):
     assert "not part of a git repo" in str(exinfo.value)
 
 
+def test__get_git_url__repo_with_no_commits(tmp_path):
+    helpers.repo_create(tmp_path)
+    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
+    helpers.write_file(tmp_path / "README.md" , "hello\n")
+    with pytest.raises(UsageError) as exinfo:
+        get_git_url(default_forges, tmp_path / "README.md", None, RefType.ShortHash)
+    assert "repo has no commits" in str(exinfo.value)
+
+
 def test__get_git_url__path_not_in_index(tmp_path):
     helpers.repo_create(tmp_path)
     helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
@@ -37,16 +46,7 @@ def test__get_git_url__path_not_in_index(tmp_path):
     helpers.write_file(tmp_path / "main.c", "#include <stdio.h>")
     with pytest.raises(UsageError) as exinfo:
         get_git_url(default_forges, tmp_path / "main.c", None, RefType.ShortHash)
-    assert "not in the git index" in str(exinfo.value)
-
-
-def test__get_git_url__repo_with_no_commits(tmp_path):
-    helpers.repo_create(tmp_path)
-    helpers.repo_add_remote(tmp_path, "origin", "git@github.com:gilessmart/giturl.git")
-    helpers.write_file(tmp_path / "README.md" , "hello\n")
-    with pytest.raises(UsageError) as exinfo:
-        get_git_url(default_forges, tmp_path / "README.md", None, RefType.ShortHash)
-    assert "not in the git index" in str(exinfo.value)
+    assert "not committed" in str(exinfo.value)
 
 
 def test__get_git_url__no_remotes(tmp_path):

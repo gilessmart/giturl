@@ -19,9 +19,12 @@ def get_git_url(forge_config: dict[str, ForgeType], path: pathlib.Path, line_num
     repo = GitRepo.from_path(path)
     if repo is None:
         raise UsageError("path is not part of a git repo")
+    
+    if not repo.has_head():
+        raise UsageError(f"repo has no commits")
         
     if not repo.in_tree(path):
-        raise UsageError(f"path {path} is not in the git index")
+        raise UsageError(f"path {path} is not committed")
 
     relative_path = get_relative_path(repo, path)
     ref = get_ref(repo, ref_type)
@@ -51,8 +54,7 @@ def get_ref(repo: GitRepo, ref_type: RefType) -> Ref:
             return Ref(RefType.Branch, branch_name)
         case RefType.ShortHash:
             hash = repo.get_short_hash()
-            # I don't know how we can get here without being able to get a hash, so suppress the error
-            return Ref(RefType.ShortHash, hash) # type: ignore
+            return Ref(RefType.ShortHash, hash)
 
 
 def get_remote_url(repo: GitRepo) -> RemoteUrl:

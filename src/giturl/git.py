@@ -66,23 +66,38 @@ class GitRepo:
     def __init__(self, root_path: str) -> None:
         self.root_path = root_path
 
-    def in_tree(self, path: pathlib.Path) -> bool:
-        """Determine whether the given path is currently in the git tree at HEAD.
+    def has_head(self) -> bool:
+        """Determine whether HEAD resolves to a commit.
 
         Returns:
-          True if the path is part of the git tree at HEAD.
-          otherwise False, including if the repo has no commits.
-        
+          True if HEAD resolves to a commit i.e. the repo has at least 1 commit, otherwise False.
+
         Raises:
           FileNotFoundError: The `git` executable was not found.
         """
         result = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", "HEAD"],
+            capture_output=True,
+            cwd=self.root_path,
+        )
+        return result.returncode == 0
+
+    def in_tree(self, path: pathlib.Path) -> bool:
+        """Determine whether the given path is currently in the git tree at HEAD.
+
+        Returns:
+          True if the path is part of the git tree at HEAD, otherwise False.
+        
+        Raises:
+          FileNotFoundError: The `git` executable was not found.
+          subprocess.CalledProcessError: Git command returned a non-zero status code, e.g. HEAD not a valid object name
+        """
+        result = subprocess.check_output(
             ["git", "ls-tree", "-z", "--name-only", "--full-tree", "HEAD", path.absolute()], 
             text=True,
-            capture_output=True,
             encoding="utf-8",
             cwd=self.root_path)
-        return result.stdout.count("\x00") > 0
+        return result.count("\x00") > 0
 
     def get_current_branch_name(self) -> str | None:
         """Get the current local branch name.
@@ -99,7 +114,6 @@ class GitRepo:
             text=True,
             encoding="utf-8",
             cwd=self.root_path).strip()
-        # If the branch name is empty, return None which indicates we're in a detached HEAD state
         return branch if branch else None
 
     def get_upstream_branch(self, local_branch: str) -> str | None:
@@ -120,23 +134,21 @@ class GitRepo:
             cwd=self.root_path)
         return result.stdout.removeprefix("refs/heads/").strip() if result.returncode == 0 else None
 
-    def get_short_hash(self) -> str | None:
+    def get_short_hash(self) -> str:
         """Get the short hash of the revision at HEAD.
 
         Returns:
-          The short hash e.g. abcdef0,
-          or None if there was no revision at HEAD e.g. if the repo has no commits.
+          The short hash e.g. abcdef0.
         
         Raises:
           FileNotFoundError: The `git` executable was not found.
+          subprocess.CalledProcessError: Git command returned a non-zero status code, e.g. HEAD not a valid revision i.e. repo has no commits
         """
-        result = subprocess.run(
+        result = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
             text=True,
-            capture_output=True,
             cwd=self.root_path)
-        # Return None if the command fails, e.g. if there are no commits in the repository
-        return result.stdout.strip() if result.returncode == 0 else None
+        return result.strip()
 
     def get_upstream_remote(self, local_branch: str) -> str | None:
         """Get the upstream remote of the given local branch.
